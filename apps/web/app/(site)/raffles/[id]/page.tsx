@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getDb, raffleVerification } from "@zecminers/db";
 import { RaffleVerifier } from "@/components/raffle/verifier";
 import { Label, Panel, SectionTitle, Well } from "@/components/ui";
-import { fmt } from "@/lib/client-api";
+import { fmt } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 

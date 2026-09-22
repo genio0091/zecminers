@@ -1,5 +1,5 @@
 import type { PublicReserves } from "@/lib/public-data";
-import { fmt } from "@/lib/client-api";
+import { fmt } from "@/lib/format";
 import { Bar, FinePrint, Label, Panel, Stat, Well, cx } from "./ui";
 
 const INVARIANT_LABEL: Record<string, string> = {

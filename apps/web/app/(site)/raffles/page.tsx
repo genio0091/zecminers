@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getDb, listRaffles } from "@zecminers/db";
 import { Label, Panel, SectionTitle, cx } from "@/components/ui";
-import { fmt, short } from "@/lib/client-api";
+import { fmt, short } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Raffles — provably fair", description: "Every ZecMiners raffle with its seed commitment, closing block and winners." };
 export const dynamic = "force-dynamic";
