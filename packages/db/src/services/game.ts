@@ -261,7 +261,9 @@ export async function startSession(db: Database, p: { userId: string; slotId: st
 
     const cfg = await getActiveConfig(tx, p.now);
     if (cfg.params.pickaxeEnabled && slot.durability <= 0) throw new GameError("SLOT_BROKEN", "The pickaxe is worn out.");
-    if ((await accountBalance(tx, "pool_mining")) <= 0n) throw new GameError("POOL_EXHAUSTED");
+    if ((await accountBalance(tx, "pool_mining")) <= 0n) {
+      throw new GameError("POOL_EXHAUSTED", "Mining opens once the reward pools are funded at genesis (Phase 0).");
+    }
 
     const day = utcDay(p.now);
     const [session] = await tx

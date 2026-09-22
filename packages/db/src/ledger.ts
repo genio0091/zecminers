@@ -105,7 +105,8 @@ export async function postLedgerTx(tx: Tx, input: PostLedgerTxInput): Promise<Po
     const acct = byCode.get(code)!;
     const next = BigInt(acct.balance) + d;
     if (next < 0n && acct.type !== "treasury_backing") {
-      throw new GameError(acct.type.startsWith("pool_") ? "POOL_EXHAUSTED" : "INSUFFICIENT_BALANCE", undefined, {
+      const pool = acct.type.startsWith("pool_");
+      throw new GameError(pool ? "POOL_EXHAUSTED" : "INSUFFICIENT_BALANCE", pool ? "This reward pool is empty (it is funded once at genesis)." : "Not enough $ZGEMS.", {
         account: code,
         balance: String(acct.balance),
         needed: String(-d),
