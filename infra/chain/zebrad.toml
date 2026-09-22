@@ -1,0 +1,16 @@
+# Zebra config for the ZecMiners chain server. Check option names against the Zebra book for the
+# release you pin — Zebra is the only node since zcashd EOL (18 Jul 2026).
+[network]
+network = "Mainnet"         # "Testnet" for staging and the Phase 0 dress rehearsal
+listen_addr = "0.0.0.0:8233"
+
+[rpc]
+# Private network only. Never expose this port publicly.
+listen_addr = "0.0.0.0:8232"
+enable_cookie_auth = false  # auth is enforced by the private network + reverse proxy
+
+[state]
+cache_dir = "/home/zebra/.cache/zebra"
+
+[tracing]
+use_color = false

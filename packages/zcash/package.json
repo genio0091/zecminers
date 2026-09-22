@@ -1,0 +1,22 @@
+{
+  "name": "@zecminers/zcash",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Zcash transparent-layer helpers: t-address base58check, ZIP 317 fees, ZRC-20/ZRC-721 payloads, finality.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@noble/hashes": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.1"
+  }
+}

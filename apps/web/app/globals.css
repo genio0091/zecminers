@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+/* ZecMiners design tokens — lifted from the "ZecMiners Website Redesign" files. */
+@theme {
+  --color-ink: #0e0b08;
+  --color-ink-2: #0a0806;
+  --color-coal: #17110a;
+  --color-coal-2: #1c150d;
+  --color-coal-3: #140f09;
+  --color-coal-hover: #231a0f;
+  --color-dirt: #2a2109;
+  --color-amber-deep: #c98a16;
+
+  --color-cream: #fff3d6;
+  --color-sand: #e6d8bc;
+  --color-dust: #cbba98;
+  --color-khaki: #b8a583;
+  --color-stone: #8e7f63;
+
+  --color-gold: #f0a81e;
+  --color-gold-hi: #ffc93c;
+  --color-gold-lo: #d98f12;
+  --color-olive: #6b5a22;
+  --color-moss: #8bc34a;
+  --color-ember: #e4572e;
+  --color-sky: #3b82f6;
+  --color-jade: #2e9e5b;
+  --color-grape: #8e5bd9;
+  --color-mint: #5bd9a8;
+
+  --font-pixel: var(--font-pixelify), "Pixelify Sans", ui-monospace, monospace;
+  --font-mono: var(--font-plex), "IBM Plex Mono", ui-monospace, monospace;
+
+  --shadow-px-2: 2px 2px 0 #000;
+  --shadow-px-3: 3px 3px 0 #000;
+  --shadow-px-4: 4px 4px 0 #000;
+  --shadow-px-5: 5px 5px 0 #000;
+  --shadow-px-6: 6px 6px 0 #000;
+  --shadow-px-8: 8px 8px 0 #000;
+
+  --animate-marquee: zm-marquee 38s linear infinite;
+  --animate-blink: zm-blink 1.6s steps(1, end) infinite;
+  --animate-blink-slow: zm-blink 2.4s steps(1, end) infinite;
+  --animate-stripe: zm-stripe 1.2s linear infinite;
+
+  @keyframes zm-marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes zm-blink {
+    0%, 60% { opacity: 1; }
+    61%, 100% { opacity: 0.15; }
+  }
+  @keyframes zm-stripe {
+    from { background-position: 0 0; }
+    to { background-position: 32px 0; }
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    color-scheme: dark;
+  }
+  body {
+    background: var(--color-ink);
+    color: var(--color-cream);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  a {
+    color: var(--color-gold-hi);
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--color-cream);
+  }
+  ::selection {
+    background: var(--color-gold);
+    color: var(--color-ink);
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-gold-hi);
+    outline-offset: 2px;
+  }
+  input,
+  textarea,
+  select {
+    font-family: var(--font-mono);
+  }
+}
+
+@utility pixelated {
+  image-rendering: pixelated;
+}
+
+@utility text-shadow-px {
+  text-shadow: 4px 4px 0 #000;
+}
+
+@utility text-shadow-px-lg {
+  text-shadow: 5px 5px 0 #000;
+}
+
+@utility scanlines {
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.28) 0 2px, rgba(0, 0, 0, 0) 2px 4px);
+}
+
+@utility progress-stripes {
+  background: repeating-linear-gradient(90deg, var(--color-gold) 0 12px, var(--color-gold-lo) 12px 24px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}

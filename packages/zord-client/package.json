@@ -1,0 +1,22 @@
+{
+  "name": "@zecminers/zord-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Typed clients for the self-hosted Zord indexer and Zebra JSON-RPC (server-side only).",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.1"
+  }
+}

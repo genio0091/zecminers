@@ -1,0 +1,21 @@
+{
+  "name": "zecminers",
+  "private": true,
+  "packageManager": "pnpm@10.11.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @zecminers/web dev",
+    "dev:worker": "pnpm --filter @zecminers/worker dev",
+    "build": "pnpm --filter @zecminers/web build",
+    "start": "pnpm --filter @zecminers/web start",
+    "typecheck": "pnpm -r --parallel typecheck",
+    "test": "pnpm -r test",
+    "lint": "pnpm --filter @zecminers/web lint",
+    "db:generate": "pnpm --filter @zecminers/db generate",
+    "db:migrate": "pnpm --filter @zecminers/db migrate",
+    "db:seed": "pnpm --filter @zecminers/db seed",
+    "simulate": "pnpm --filter @zecminers/economy simulate"
+  }
+}

@@ -1,0 +1,20 @@
+[package]
+name = "zecminers-signer"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.80"
+description = "Isolated payout signer for ZecMiners weekly ZRC-20 payouts (blueprint §10.3). No public port."
+license = "UNLICENSED"
+publish = false
+
+[dependencies]
+postgres = { version = "0.19", optional = true }
+
+[features]
+default = ["pg"]
+pg = ["dep:postgres"]
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"

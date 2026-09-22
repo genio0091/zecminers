@@ -1,0 +1,34 @@
+{
+  "name": "@zecminers/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PostgreSQL schema, double-entry ledger and shared game/payout services (blueprint §8).",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "generate": "drizzle-kit generate",
+    "migrate": "tsx scripts/migrate.ts",
+    "seed": "tsx scripts/seed.ts",
+    "studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@zecminers/economy": "workspace:*",
+    "@zecminers/zcash": "workspace:*",
+    "@zecminers/zord-client": "workspace:*",
+    "drizzle-orm": "^0.45.3",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.11",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.1"
+  }
+}

@@ -1,0 +1,37 @@
+# Chain server (blueprint §11.2): Zebra + self-hosted Zord on a dedicated VPS (NVMe, ≥ 8 GB RAM).
+# Nothing here is published to the internet. Reach Zord / Zebra RPC from the app backend over
+# WireGuard or a private network only.
+#
+#   cp .env.example .env && docker compose up -d
+services:
+  zebra:
+    image: zfnd/zebra:latest # pin a release that supports NU7 before 20 Oct 2026
+    restart: unless-stopped
+    volumes:
+      - ./zebrad.toml:/home/zebra/.config/zebrad.toml:ro
+      - zebra-state:/home/zebra/.cache/zebra
+    networks: [chain]
+    # P2P must be reachable for sync; RPC (8232) stays on the private network.
+    ports: ["8233:8233"]
+
+  zord:
+    # Zord has no official image yet: build from the reference implementation and pin a commit
+    # after the M0 verification (blueprint §3.3). Treat its source as the spec, not the README.
+    build:
+      context: https://github.com/zatoshilabs/zord.git
+    restart: unless-stopped
+    depends_on: [zebra]
+    environment:
+      ZCASH_RPC_URL: http://zebra:8232
+      ZCASH_RPC_USER: ${ZCASH_RPC_USER}
+      ZCASH_RPC_PASSWORD: ${ZCASH_RPC_PASSWORD}
+    volumes: [zord-data:/data]
+    networks: [chain]
+    # Expose the API only on the WireGuard interface, e.g. "10.8.0.1:3000:3000".
+    ports: ["127.0.0.1:3000:3000"]
+
+networks:
+  chain: {}
+volumes:
+  zebra-state: {}
+  zord-data: {}
