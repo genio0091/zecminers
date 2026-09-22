@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Low-height screens (laptops ≤ 820px tall): the landing deck tightens so each sheet fits. */
+@custom-variant short (@media (max-height: 820px));
+
 /* ZecMiners design tokens — lifted from the "ZecMiners Website Redesign" files. */
 @theme {
   --color-ink: #0e0b08;
@@ -42,6 +45,8 @@
   --animate-blink: zm-blink 1.6s steps(1, end) infinite;
   --animate-blink-slow: zm-blink 2.4s steps(1, end) infinite;
   --animate-stripe: zm-stripe 1.2s linear infinite;
+  --animate-sheet-next: zm-sheet-next 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-sheet-prev: zm-sheet-prev 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
 
   @keyframes zm-marquee {
     from { transform: translateX(0); }
@@ -50,6 +55,14 @@
   @keyframes zm-blink {
     0%, 60% { opacity: 1; }
     61%, 100% { opacity: 0.15; }
+  }
+  @keyframes zm-sheet-next {
+    from { opacity: 0; transform: translateX(28px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes zm-sheet-prev {
+    from { opacity: 0; transform: translateX(-28px); }
+    to { opacity: 1; transform: none; }
   }
   @keyframes zm-stripe {
     from { background-position: 0 0; }

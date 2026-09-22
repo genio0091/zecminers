@@ -1,6 +1,6 @@
-import { createHmac, randomInt, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
 import { durabilityMax } from "@zecminers/economy";
-import { ADDRESS_ERROR_MESSAGES, checkTransparentAddress, type ZcashNetwork } from "@zecminers/zcash";
+import { ADDRESS_ERROR_MESSAGES, checkTransparentAddress, encodeTransparentAddress, type ZcashNetwork } from "@zecminers/zcash";
 import type { ChainIndexer } from "@zecminers/zord-client";
 import { and, asc, count, eq, inArray, isNotNull, lt, or, isNull, sql } from "drizzle-orm";
 import type { Database, DbOrTx } from "../client";
@@ -101,6 +101,63 @@ export async function importPasses(
       });
     }
     return { dryRun: p.dryRun, created, rejected };
+  });
+}
+
+export interface TestLogin {
+  passNumber: number;
+  address: string;
+  claimCode: string;
+}
+
+/**
+ * Team/test logins: fresh t1 addresses (random, nobody holds a key — never send funds to them)
+ * with claim codes. They sign in and play like any pass, but `is_test` keeps them out of every
+ * payout batch. Plain codes are returned only here; only their hashes are stored.
+ */
+export async function generateTestPasses(
+  db: Database,
+  p: { adminId: string; count: number; reason: string; pepper: string; network: ZcashNetwork; label?: string },
+): Promise<TestLogin[]> {
+  if (!Number.isInteger(p.count) || p.count < 1 || p.count > 500) throw new GameError("VALIDATION", "Generate between 1 and 500 test logins.");
+  return db.transaction(async (tx) => {
+    const [maxRow] = await tx.select({ max: sql<number>`coalesce(max(${passes.passNumber}), 0)` }).from(passes);
+    // Test passes live in their own number range so real airdrop numbers stay tidy.
+    let next = Math.max(Number(maxRow?.max ?? 0) + 1, 900_001);
+    const out: TestLogin[] = [];
+    for (let i = 0; i < p.count; i++) {
+      const address = encodeTransparentAddress(randomBytes(20), p.network);
+      const claimCode = generateClaimCode();
+      await tx.insert(passes).values({
+        passNumber: next,
+        originAddress: address,
+        claimCodeHash: hashClaimCode(claimCode, p.pepper),
+        isTest: true,
+        note: p.label ?? "team test login",
+      });
+      out.push({ passNumber: next, address, claimCode });
+      next++;
+    }
+    await audit(tx, {
+      adminId: p.adminId,
+      action: "passes.generate_test",
+      payload: { count: out.length, first: out[0]?.passNumber, last: out.at(-1)?.passNumber },
+      reason: p.reason,
+    });
+    return out;
+  });
+}
+
+/** Before launch: switch every test pass off in one go (the rows stay for the audit trail). */
+export async function deactivateTestPasses(db: Database, p: { adminId: string; reason: string }) {
+  return db.transaction(async (tx) => {
+    const rows = await tx
+      .update(passes)
+      .set({ status: "deactivated", statusReason: `test pass: ${p.reason}` })
+      .where(and(eq(passes.isTest, true), sql`${passes.status} <> 'deactivated'`))
+      .returning({ id: passes.id });
+    await audit(tx, { adminId: p.adminId, action: "passes.deactivate_test", payload: { count: rows.length }, reason: p.reason });
+    return { deactivated: rows.length };
   });
 }
 

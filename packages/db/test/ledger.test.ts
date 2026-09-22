@@ -26,6 +26,8 @@ import {
   upgradeSlot,
   userAccountCode,
   walletSignIn,
+  generateTestPasses,
+  deactivateTestPasses,
   type DbHandle,
 } from "../src";
 import { addr, dbAvailable, freshDb, PEPPER, playerWithPass } from "./helpers";
@@ -297,6 +299,32 @@ describe.skipIf(!available)("ledger & game services (real Postgres)", () => {
       ["no_negative_balances", true],
     ]);
     expect((await checkBalanceCache(h.db)).ok).toBe(true);
+  });
+
+  it("test logins sign in and play but are never paid out", async () => {
+    const logins = await generateTestPasses(h.db, { adminId: "a", count: 3, reason: "team", pepper: PEPPER, network: "mainnet" });
+    expect(logins).toHaveLength(3);
+    expect(new Set(logins.map((l) => l.address)).size).toBe(3);
+    const t = logins[0]!;
+    const me = await walletSignIn(h.db, { address: t.address, claimCode: t.claimCode, pepper: PEPPER, network: "mainnet", now: T0 });
+    await h.db.transaction((tx) =>
+      postLedgerTx(tx, {
+        idempotencyKey: "topup-testpass",
+        kind: "test",
+        actor: "test",
+        entries: [
+          { account: "pool_marketing", amount: -5_000n },
+          { account: userAccountCode(me.userId), amount: 5_000n },
+        ],
+      }),
+    );
+    const cutoff = await createWeeklyBatch(h.db, { now: new Date("2026-10-05T00:00:00Z"), freezeWindows: [] });
+    const [item] = await h.db.select().from(tables.payoutItems).where(eq(tables.payoutItems.userId, me.userId));
+    expect(item).toBeUndefined();
+    expect(await accountBalance(h.db, userAccountCode(me.userId))).toBe(5_000n);
+    expect(cutoff.status).toBe("created");
+    const off = await deactivateTestPasses(h.db, { adminId: "a", reason: "launch" });
+    expect(off.deactivated).toBe(3);
   });
 
   it("imports passes with one-time codes (dry run writes nothing)", async () => {

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "PostgreSQL schema, double-entry ledger and shared game/payout services (blueprint §8).",
+  "description": "PostgreSQL schema, double-entry ledger and shared game/payout services (blueprint \u00a78).",
   "exports": {
     ".": "./src/index.ts",
     "./schema": "./src/schema.ts"
@@ -14,7 +14,8 @@
     "generate": "drizzle-kit generate",
     "migrate": "tsx scripts/migrate.ts",
     "seed": "tsx scripts/seed.ts",
-    "studio": "drizzle-kit studio"
+    "studio": "drizzle-kit studio",
+    "team-logins": "tsx scripts/team-logins.ts"
   },
   "dependencies": {
     "@zecminers/economy": "workspace:*",

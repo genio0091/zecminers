@@ -75,6 +75,8 @@ export const passes = pgTable(
     statusReason: text("status_reason"),
     lastOwnerCheckAt: ts("last_owner_check_at"),
     lastSeenOwner: text("last_seen_owner"),
+    /** Team/test login: can sign in and play, is never included in a payout batch. */
+    isTest: boolean("is_test").notNull().default(false),
     note: text("note"),
     createdAt: ts("created_at").notNull().defaultNow(),
   },

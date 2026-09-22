@@ -277,6 +277,8 @@ export function AdminApp() {
           <ConfigEditor current={o.config} busy={busy} run={run} />
         </div>
 
+        <TestLogins busy={busy} run={run} quick={quick} />
+
         <PassesList busy={busy} quick={quick} run={run} />
 
         <div className="grid grid-cols-[repeat(auto-fit,minmax(340px,1fr))] gap-5">
@@ -414,7 +416,67 @@ function ConfigEditor({ current, busy, run }: { current: Overview["config"]; bus
   );
 }
 
-type PassRow = { id: string; passNumber: number; originAddress: string; inscriptionId: string | null; status: string; statusReason: string | null; userId: string | null };
+function TestLogins({ busy, run, quick }: { busy: boolean; run: Run; quick: Quick }) {
+  const [count, setCount] = useState(10);
+  const [label, setLabel] = useState("team test login");
+  const [reason, setReason] = useState("");
+  const [logins, setLogins] = useState<{ passNumber: number; address: string; claimCode: string }[] | null>(null);
+  const go = async () => {
+    const r = await run<{ passNumber: number; address: string; claimCode: string }[]>("Generate test logins", "/api/admin/passes/test", { count, label, reason });
+    if (r) setLogins(r);
+  };
+  const csv = logins ? ["pass_number,address,claim_code", ...logins.map((l) => `${l.passNumber},${l.address},${l.claimCode}`)].join("\n") : "";
+  return (
+    <Section
+      title="Team test logins"
+      tone="coal-2"
+      right={
+        <Button size="sm" variant="ember" disabled={busy} onClick={() => quick("Deactivate all test passes", "/api/admin/passes/test/deactivate")}>
+          Deactivate all test passes
+        </Button>
+      }
+    >
+      <p className="mb-3 mt-0 text-[13px] text-dust">
+        Each login is a fresh t1 address + claim code for the wallet sign-in. Test passes can play but are <strong className="text-cream">never paid out</strong>.
+        The addresses have no private key — never send funds to them. Codes are shown once: download the CSV.
+      </p>
+      <div className="grid gap-2 sm:grid-cols-[110px_1fr_1fr_auto]">
+        <input type="number" min={1} max={500} value={count} onChange={(e) => setCount(Number(e.target.value) || 1)} className={input} aria-label="How many" />
+        <input value={label} onChange={(e) => setLabel(e.target.value)} className={input} aria-label="Label" placeholder="Label" />
+        <input value={reason} onChange={(e) => setReason(e.target.value)} className={input} placeholder="Reason (e.g. team QA)" />
+        <Button disabled={busy || reason.trim().length < 3} onClick={go}>
+          Generate
+        </Button>
+      </div>
+      {logins ? (
+        <div className="mt-3 grid gap-1.5 text-[12.5px]">
+          <div className="text-moss">{logins.length} test login(s) created.</div>
+          <div className="max-h-48 overflow-auto border-3 border-black bg-ink p-2 font-mono">
+            {logins.map((l) => (
+              <div key={l.passNumber}>
+                #{l.passNumber} {l.address} <span className="text-gold-hi">{l.claimCode}</span>
+              </div>
+            ))}
+          </div>
+          <a download="zecminers-team-logins.csv" href={`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`}>
+            Download CSV ▸
+          </a>
+        </div>
+      ) : null}
+    </Section>
+  );
+}
+
+type PassRow = {
+  id: string;
+  passNumber: number;
+  originAddress: string;
+  inscriptionId: string | null;
+  status: string;
+  statusReason: string | null;
+  userId: string | null;
+  isTest?: boolean;
+};
 
 function PassesList({ busy, quick, run }: { busy: boolean; quick: Quick; run: Run }) {
   const [rows, setRows] = useState<PassRow[]>([]);
@@ -445,7 +507,10 @@ function PassesList({ busy, quick, run }: { busy: boolean; quick: Quick; run: Ru
           <tbody>
             {rows.map((p) => (
               <tr key={p.id} className="border-t-3 border-ink">
-                <td className="p-1.5">{p.passNumber}</td>
+                <td className="p-1.5">
+                  {p.passNumber}
+                  {p.isTest ? <span className="ml-1.5 border-2 border-black bg-olive px-1 text-[10px] text-cream">TEST</span> : null}
+                </td>
                 <td className="p-1.5">{short(p.originAddress, 10, 6)}</td>
                 <td className="p-1.5">
                   <button type="button" className="cursor-pointer text-gold-hi" onClick={() => setIns(p)}>

@@ -166,6 +166,7 @@ export async function listPasses(db: DbOrTx, limit = 50) {
       statusReason: passes.statusReason,
       userId: passes.userId,
       lastOwnerCheckAt: passes.lastOwnerCheckAt,
+      isTest: passes.isTest,
     })
     .from(passes)
     .orderBy(desc(passes.passNumber))

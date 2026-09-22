@@ -36,11 +36,11 @@ export const PLAY_STEPS = [
 ];
 
 export const PAYOUT_STEPS = [
-  { step: "STEP 1", title: "Cutoff", body: "Your in-game balance is moved into the week's payout queue. Spend on upgrades before the cutoff if you want to." },
-  { step: "STEP 2", title: "Checks", body: "Per-user and per-batch limits, plus the reserve invariants. If anything fails the batch is held and the team is alerted." },
-  { step: "STEP 3", title: "Approval", body: "A human approves the batch before anything is signed. Signing happens in an isolated service, never on the website." },
-  { step: "STEP 4", title: "Two transactions", body: "A ZRC-20 transfer is inscribed, then its UTXO is sent to your address. That second transaction is what moves the balance." },
-  { step: "STEP 5", title: "Settled", body: "After finality the indexer credits your address, your payout history shows the txid, and the tokens are yours.", done: true },
+  { step: "STEP 1", title: "Cutoff", short: "Your balance is queued at the weekly cutoff.", body: "Your in-game balance is moved into the week's payout queue. Spend on upgrades before the cutoff if you want to." },
+  { step: "STEP 2", title: "Checks", short: "Limits and reserve checks; a failure holds the batch.", body: "Per-user and per-batch limits, plus the reserve invariants. If anything fails the batch is held and the team is alerted." },
+  { step: "STEP 3", title: "Approval", short: "A human approves before anything is signed.", body: "A human approves the batch before anything is signed. Signing happens in an isolated service, never on the website." },
+  { step: "STEP 4", title: "Two transactions", short: "Transfer inscribed, then sent to your pass address.", body: "A ZRC-20 transfer is inscribed, then its UTXO is sent to your address. That second transaction is what moves the balance." },
+  { step: "STEP 5", title: "Settled", short: "After finality the tokens are in your wallet.", body: "After finality the indexer credits your address, your payout history shows the txid, and the tokens are yours.", done: true },
 ];
 
 export const PASS_RULES = [
@@ -76,6 +76,7 @@ export const ROADMAP = [
     phase: "PHASE 0",
     title: "Genesis",
     status: "In preparation",
+    summary: "Token deployed and fully minted to the treasury; pass collection deployed; IDs published.",
     active: true,
     points: [
       "Deploy $ZGEMS as a ZRC-20 token on Zcash mainnet.",
@@ -88,6 +89,7 @@ export const ROADMAP = [
     phase: "PHASE 1",
     title: "Mining + weekly payouts",
     status: "In development",
+    summary: "Passes airdropped, web mining live, daily rewards, raffles and weekly payouts.",
     active: true,
     points: [
       "Airdrop soulbound Whitelist Passes to winners and selected community members.",
@@ -100,6 +102,7 @@ export const ROADMAP = [
     phase: "PHASE 2",
     title: "NFT mint",
     status: "Planned",
+    summary: "5,555 Miners, each a mining unit. Standard, date and price announced first.",
     active: false,
     points: ["5,555 unique Miners, each one a mining unit in the game.", "The NFT standard, mint date and price are announced before the mint."],
   },
@@ -107,6 +110,7 @@ export const ROADMAP = [
     phase: "PHASE 3",
     title: "Official trading",
     status: "Planned, after the NFT mint",
+    summary: "Official trading starts after the NFT mint, announced in advance.",
     active: false,
     points: [
       "Official trading of $ZGEMS starts after the NFT mint.",
@@ -116,20 +120,20 @@ export const ROADMAP = [
 ];
 
 export const BUILDING = [
-  { title: "Our own node and indexer", body: "A Zebra node with a self-hosted Zord indexer is the source of truth for balances and pass ownership. Your browser never talks to either directly." },
-  { title: "Server-authoritative game", body: "The client only sends intent — start, collect, repair. Every amount is computed on the server from a versioned config, on the server clock." },
-  { title: "Double-entry ledger", body: "Every balance change is an immutable set of entries that sum to zero, so any number on your screen can be traced back to where it came from." },
-  { title: "Cold treasury, isolated signer", body: "Treasury keys never touch a server. Weekly batches are signed by a separate service holding a small hot wallet, with no public port." },
-  { title: "Provably fair raffles", body: "A seed hash and a future Zcash block height are published when a raffle opens. After the draw, anyone can recompute the winner." },
-  { title: "Reviewed before launch", body: "The payout path gets an external security review before the first batch goes out, and payouts stop automatically if a reserve check fails." },
+  { title: "Our own node and indexer", short: "Zebra + self-hosted Zord are the source of truth.", body: "A Zebra node with a self-hosted Zord indexer is the source of truth for balances and pass ownership. Your browser never talks to either directly." },
+  { title: "Server-authoritative game", short: "The client sends intent; the server computes every amount.", body: "The client only sends intent — start, collect, repair. Every amount is computed on the server from a versioned config, on the server clock." },
+  { title: "Double-entry ledger", short: "Immutable entries that always sum to zero.", body: "Every balance change is an immutable set of entries that sum to zero, so any number on your screen can be traced back to where it came from." },
+  { title: "Cold treasury, isolated signer", short: "Treasury keys never touch a server.", body: "Treasury keys never touch a server. Weekly batches are signed by a separate service holding a small hot wallet, with no public port." },
+  { title: "Provably fair raffles", short: "Seed hash + future block hash; anyone can recompute.", body: "A seed hash and a future Zcash block height are published when a raffle opens. After the draw, anyone can recompute the winner." },
+  { title: "Reviewed before launch", short: "External review; payouts stop if a check fails.", body: "The payout path gets an external security review before the first batch goes out, and payouts stop automatically if a reserve check fails." },
 ];
 
 export const RAFFLE_STEPS = [
-  { title: "Commit", body: "We publish the hash of a secret seed and the Zcash block height where the raffle closes." },
-  { title: "Tickets", body: "Players buy tickets with in-game $ZGEMS until just before the closing block." },
-  { title: "Closing block", body: "The Zcash network produces the closing block. Its hash is outside our control." },
-  { title: "Reveal", body: "We publish the seed and compute the winner with the formula below." },
-  { title: "Check", body: "Anyone can hash the seed, match it to the commitment and recompute the winner." },
+  { title: "Commit", short: "Seed hash + closing block published.", body: "We publish the hash of a secret seed and the Zcash block height where the raffle closes." },
+  { title: "Tickets", short: "Bought with in-game $ZGEMS.", body: "Players buy tickets with in-game $ZGEMS until just before the closing block." },
+  { title: "Closing block", short: "Its hash is outside our control.", body: "The Zcash network produces the closing block. Its hash is outside our control." },
+  { title: "Reveal", short: "We publish the seed and the winner.", body: "We publish the seed and compute the winner with the formula below." },
+  { title: "Check", short: "Anyone can recompute it.", body: "Anyone can hash the seed, match it to the commitment and recompute the winner." },
 ];
 
 export const NOT_LIST = [

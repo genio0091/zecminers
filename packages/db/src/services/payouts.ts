@@ -53,7 +53,8 @@ export async function createWeeklyBatch(
       .from(ledgerAccounts)
       .innerJoin(users, eq(users.id, ledgerAccounts.userId))
       .innerJoin(passes, eq(passes.userId, users.id))
-      .where(and(eq(ledgerAccounts.type, "user"), gt(ledgerAccounts.balance, 0n)));
+      // Team/test passes play but are never paid out.
+      .where(and(eq(ledgerAccounts.type, "user"), gt(ledgerAccounts.balance, 0n), eq(passes.isTest, false)));
 
     const plan = planPayoutBatch(
       cfg.params,
