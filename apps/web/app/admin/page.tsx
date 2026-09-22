@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 /** Admin panel (blueprint §7.8). Role + IP allowlist are enforced again on every API call. */
 export default async function AdminPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/play");
+  if (!session?.user?.id) redirect("/play?team=1");
   const [user] = await getDb().select().from(tables.users).where(eq(tables.users.id, session.user.id));
   const isAdmin = !!user && (user.role === "admin" || serverEnv.adminDiscordIds.includes(user.discordId));
   if (!isAdmin) redirect("/play");

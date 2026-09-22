@@ -48,8 +48,9 @@ Set these in Project → Settings → Environment Variables. See `.env.example` 
 |---|---|
 | `AUTH_SECRET` | `npx auth secret` |
 | `AUTH_URL` | `https://your-domain` |
-| `AUTH_DISCORD_ID`, `AUTH_DISCORD_SECRET` | Discord Developer Portal → OAuth2. Redirect: `https://your-domain/api/auth/callback/discord` |
-| `ADMIN_DISCORD_IDS` | Comma-separated Discord user ids with admin rights |
+| `ADMIN_ACCESS_KEY` | ≥ 24 random characters. Enables **Team login** on `/play` → `/admin` |
+| `AUTH_DISCORD_ID`, `AUTH_DISCORD_SECRET` | Optional. Discord login appears once both are set. Redirect: `https://your-domain/api/auth/callback/discord` |
+| `ADMIN_DISCORD_IDS` | Optional. Comma-separated Discord user ids with admin rights |
 | `ADMIN_IP_ALLOWLIST` | Optional. Recommended for production (§9.2) |
 | `CLAIM_CODE_PEPPER` | ≥ 16 random characters. **Never change it after importing passes**, or the existing claim codes stop working |
 | `CRON_SECRET` | Random string. The scheduled-jobs workflow sends it as a Bearer token (same value as the GitHub secret) |
@@ -61,6 +62,8 @@ Set these in Project → Settings → Environment Variables. See `.env.example` 
 | `NEXT_PUBLIC_SITE_URL` | Canonical URL for metadata and the sitemap |
 
 `AUTH_DEV_LOGIN` is ignored in production builds.
+
+**Sign-in.** Players sign in with the t1 address their pass was airdropped to plus its claim code. The first sign-in creates the account, links the address and opens the slot; after that the claim code is the player's password. A leaked code can't redirect tokens (payouts only go to the origin address), but it would let someone spend that player's in-game balance, so tell winners to keep it private. Discord login can be switched on later without code changes.
 
 ## 5. Scheduled jobs
 

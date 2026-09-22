@@ -15,7 +15,7 @@ Mutations are POSTs. They are checked for **Origin**, return `MAINTENANCE` while
 | POST | `/api/waitlist` 🛡 | Pass waitlist (handle + t1 address, base58check) |
 | GET | `/api/health` | DB ping + maintenance flag |
 
-## Player (Discord session)
+## Player (signed in: wallet + claim code, or Discord)
 
 | Method | Path | |
 |---|---|---|

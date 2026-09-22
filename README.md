@@ -10,7 +10,7 @@ This repository is the full build described in *ZecMiners — Developer Blueprin
 |---|---|
 | Web + API | Next.js 16 (App Router, Turbopack) · React 19 · TypeScript · Tailwind CSS 4 |
 | Game canvas | Phaser 4, pixel art generated in code. It is pure presentation; all state comes from the server |
-| Auth | Auth.js v5 with Discord OAuth, plus a dev-only local login |
+| Auth | Auth.js v5: wallet sign-in (pass address + claim code), admin-key team login, optional Discord OAuth, dev-only local login |
 | Database | PostgreSQL 16+ (Neon in production) with Drizzle ORM and explicit SQL transactions |
 | Jobs | GitHub Actions schedule (works on Vercel Hobby) → `/api/cron/[job]`, or the pg-boss worker on a VPS (same code) |
 | Chain | Zebra node + self-hosted Zord indexer. A mock indexer backed by the DB is used for local dev |
@@ -77,7 +77,7 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). In short:
 2. Add Neon from Vercel Storage. It sets `DATABASE_URL` and `DATABASE_URL_UNPOOLED`.
 3. Push all tables: `DATABASE_URL_UNPOOLED=… pnpm db:migrate && DATABASE_URL=… pnpm db:seed`.
 4. Add a Blob store and run `pnpm --filter @zecminers/web media:upload`. Then set `NEXT_PUBLIC_MEDIA_BASE_URL`.
-5. Set `AUTH_SECRET`, the Discord OAuth values, `CLAIM_CODE_PEPPER`, `CRON_SECRET`, Turnstile keys and `ADMIN_DISCORD_IDS`.
+5. Set `AUTH_SECRET`, `ADMIN_ACCESS_KEY`, `CLAIM_CODE_PEPPER`, `CRON_SECRET` and the Turnstile keys. The Discord values are optional.
 6. In GitHub → Actions secrets/variables, set `CRON_SECRET` and `SITE_URL` to turn on the scheduled jobs.
 
 ## What is done, and what still has to happen before launch

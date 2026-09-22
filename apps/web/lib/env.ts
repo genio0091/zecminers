@@ -26,6 +26,8 @@ export const serverEnv = {
   adminDiscordIds: list(process.env.ADMIN_DISCORD_IDS),
   adminIpAllowlist: list(process.env.ADMIN_IP_ALLOWLIST),
   devLogin: process.env.AUTH_DEV_LOGIN === "true" && !isProd,
+  /** Team login for /admin while Discord is off. Needs ≥ 24 characters to be enabled. */
+  adminAccessKey: (process.env.ADMIN_ACCESS_KEY ?? "").length >= 24 ? (process.env.ADMIN_ACCESS_KEY as string) : "",
   turnstileSecret: process.env.TURNSTILE_SECRET_KEY ?? "",
   redisUrl: process.env.REDIS_URL ?? process.env.KV_URL ?? "",
   cronSecret: process.env.CRON_SECRET ?? "",

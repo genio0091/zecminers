@@ -25,6 +25,7 @@ import {
   tables,
   upgradeSlot,
   userAccountCode,
+  walletSignIn,
   type DbHandle,
 } from "../src";
 import { addr, dbAvailable, freshDb, PEPPER, playerWithPass } from "./helpers";
@@ -118,6 +119,21 @@ describe.skipIf(!available)("ledger & game services (real Postgres)", () => {
     await expect(
       linkWallet(h.db, { ...base, userId: other.user.id, claimCode: "ZM-AAAA-BBBB" }),
     ).rejects.toMatchObject({ code: "ADDRESS_TAKEN" });
+  });
+
+  it("wallet sign-in: first time creates the account, then the code works as a password", async () => {
+    const p = await playerWithPass(h, "walletlogin");
+    const base = { address: p.address, pepper: PEPPER, network: "mainnet" as const, now: T0 };
+    await expect(walletSignIn(h.db, { ...base, claimCode: "ZM-WRNG-CODE" })).rejects.toMatchObject({ code: "INVALID_CLAIM" });
+    await expect(walletSignIn(h.db, { ...base, address: addr("no-pass-here"), claimCode: "ZM-AAAA-BBBB" })).rejects.toMatchObject({ code: "NO_PASS" });
+    const first = await walletSignIn(h.db, { ...base, claimCode: "zm-aaaa-bbbb" });
+    expect(first.created).toBe(true);
+    const again = await walletSignIn(h.db, { ...base, claimCode: "ZM-AAAA-BBBB" });
+    expect(again).toMatchObject({ userId: first.userId, created: false });
+    const [slot] = await listSlots(h.db, first.userId, T0);
+    expect(slot?.state).toBe("idle");
+    await h.db.update(tables.users).set({ status: "frozen" }).where(eq(tables.users.id, first.userId));
+    await expect(walletSignIn(h.db, { ...base, claimCode: "ZM-AAAA-BBBB" })).rejects.toMatchObject({ code: "ACCOUNT_FROZEN" });
   });
 
   it("100 parallel collects pay exactly once", async () => {

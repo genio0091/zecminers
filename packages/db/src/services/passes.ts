@@ -133,7 +133,8 @@ export async function linkWallet(
     await tx.update(users).set({ walletAddress: address, walletLinkedAt: p.now }).where(eq(users.id, p.userId));
     await tx
       .update(passes)
-      .set({ userId: p.userId, status: "active", claimCodeHash: null, claimCodeUsedAt: p.now })
+      // The hash is kept: the same code is the owner's wallet sign-in secret (see walletSignIn).
+      .set({ userId: p.userId, status: "active", claimCodeUsedAt: p.now })
       .where(eq(passes.id, pass.id));
     await ensureUserAccount(tx, p.userId);
     const cfg = await getActiveConfig(tx, p.now);
@@ -143,6 +144,59 @@ export async function linkWallet(
       .onConflictDoNothing({ target: slots.passId })
       .returning({ id: slots.id });
     return { passId: pass.id, passNumber: pass.passNumber, address, slotId: slot?.id ?? null };
+  });
+}
+
+/**
+ * Wallet sign-in (used while Discord login is off): the player pastes the t1 address their pass
+ * was airdropped to plus its claim code. The first sign-in creates the account, links the
+ * address and opens the slot; later sign-ins use the same code as a password. Payouts still only
+ * ever go to the origin address, so a leaked code can't redirect tokens.
+ */
+export async function walletSignIn(
+  db: Database,
+  p: { address: string; claimCode: string; pepper: string; network: ZcashNetwork; now: Date },
+): Promise<{ userId: string; role: "user" | "admin"; created: boolean; address: string }> {
+  const address = p.address.trim();
+  const check = checkTransparentAddress(address, { network: p.network });
+  if (!check.ok) throw new GameError("INVALID_ADDRESS", ADDRESS_ERROR_MESSAGES[check.reason]);
+  return db.transaction(async (tx) => {
+    const [pass] = await tx.select().from(passes).where(eq(passes.originAddress, address)).limit(1).for("update");
+    if (!pass) throw new GameError("NO_PASS", "No Whitelist Pass was airdropped to this address.");
+    if (!pass.claimCodeHash || !safeEqualHex(hashClaimCode(p.claimCode, p.pepper), pass.claimCodeHash)) {
+      throw new GameError("INVALID_CLAIM", "Address or claim code not recognised.");
+    }
+
+    if (pass.userId) {
+      const [user] = await tx.select().from(users).where(eq(users.id, pass.userId)).limit(1);
+      if (!user) throw new GameError("INTERNAL", "Pass is linked to a missing account.");
+      if (user.status === "frozen") throw new GameError("ACCOUNT_FROZEN", user.frozenReason ?? "This account is frozen.");
+      return { userId: user.id, role: user.role, created: false, address };
+    }
+
+    // `discord_id` is the account identity column; wallet accounts use a namespaced id.
+    const identity = `wallet:${address}`;
+    const [owner] = await tx.select({ id: users.id }).from(users).where(eq(users.walletAddress, address)).limit(1);
+    let userId = owner?.id;
+    if (!userId) {
+      const [created] = await tx
+        .insert(users)
+        .values({ discordId: identity, discordUsername: `${address.slice(0, 6)}…${address.slice(-4)}`, walletAddress: address, walletLinkedAt: p.now })
+        .onConflictDoUpdate({ target: users.discordId, set: { walletAddress: address, walletLinkedAt: p.now } })
+        .returning({ id: users.id });
+      userId = created!.id;
+    }
+    await tx
+      .update(passes)
+      .set({ userId, status: pass.status === "unclaimed" ? "active" : pass.status, claimCodeUsedAt: pass.claimCodeUsedAt ?? p.now })
+      .where(eq(passes.id, pass.id));
+    await ensureUserAccount(tx, userId);
+    const cfg = await getActiveConfig(tx, p.now);
+    await tx
+      .insert(slots)
+      .values({ userId, passId: pass.id, level: 1, durability: durabilityMax(cfg.params, 1), state: "idle" })
+      .onConflictDoNothing({ target: slots.passId });
+    return { userId, role: "user", created: true, address };
   });
 }
 
