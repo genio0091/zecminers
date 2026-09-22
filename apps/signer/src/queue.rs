@@ -45,8 +45,12 @@ pub fn claim_next(c: &mut Client) -> Result<Option<Claimed>, postgres::Error> {
         returning id::text, address, amount::text, attempts",
         &[],
     )?;
-    if row.is_some() {
-        c.execute("update payout_batches set status = 'sending' where status = 'approved' and id = (select batch_id from payout_items where id::text = $1)", &[&row.as_ref().unwrap().get::<_, String>(0)])?;
+    if let Some(r) = &row {
+        let id: String = r.get(0);
+        c.execute(
+            "update payout_batches set status = 'sending' where status = 'approved' and id = (select batch_id from payout_items where id::text = $1)",
+            &[&id],
+        )?;
     }
     Ok(row.as_ref().map(row_to_claimed))
 }

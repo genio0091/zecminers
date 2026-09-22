@@ -30,7 +30,7 @@ impl Utxo {
 /// or might carry, an inscription.
 pub fn select_fee_inputs(utxos: &[Utxo], target_zats: u64) -> Result<Vec<Utxo>, SelectError> {
     let mut clean: Vec<&Utxo> = utxos.iter().filter(|u| u.is_clean()).collect();
-    clean.sort_by(|a, b| b.value_zats.cmp(&a.value_zats));
+    clean.sort_by_key(|u| std::cmp::Reverse(u.value_zats));
     let available: u64 = clean.iter().map(|u| u.value_zats).sum();
     let mut picked = Vec::new();
     let mut sum = 0u64;
