@@ -3,11 +3,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { chain } from "@/lib/chain";
 import { serverEnv } from "@/lib/env";
 
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 /**
- * Vercel Cron entry point for the scheduled jobs (see vercel.json). Vercel sends
- * `Authorization: Bearer $CRON_SECRET`. On a VPS the pg-boss worker runs the same functions.
+ * Entry point for the scheduled jobs. Called with `Authorization: Bearer $CRON_SECRET` by
+ * .github/workflows/scheduled-jobs.yml (works on the Vercel Hobby plan), or by Vercel Cron on Pro.
+ * On a VPS the pg-boss worker runs the same functions instead.
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ job: string }> }) {
   const { job } = await params;

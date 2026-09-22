@@ -1,13 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["sin1"],
-  "crons": [
-    { "path": "/api/cron/invariants", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/balance-cache", "schedule": "7 * * * *" },
-    { "path": "/api/cron/pass-owners", "schedule": "17 * * * *" },
-    { "path": "/api/cron/payout-cutoff", "schedule": "0 0 * * 1" },
-    { "path": "/api/cron/payout-settle", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/raffle-close", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/chain-lag", "schedule": "*/5 * * * *" }
-  ]
+  "regions": ["sin1"]
 }

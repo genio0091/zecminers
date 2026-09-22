@@ -12,7 +12,7 @@ This repository is the full build described in *ZecMiners — Developer Blueprin
 | Game canvas | Phaser 4, pixel art generated in code. It is pure presentation; all state comes from the server |
 | Auth | Auth.js v5 with Discord OAuth, plus a dev-only local login |
 | Database | PostgreSQL 16+ (Neon in production) with Drizzle ORM and explicit SQL transactions |
-| Jobs | pg-boss worker (VPS) **or** Vercel Cron → `/api/cron/[job]` (same code) |
+| Jobs | GitHub Actions schedule (works on Vercel Hobby) → `/api/cron/[job]`, or the pg-boss worker on a VPS (same code) |
 | Chain | Zebra node + self-hosted Zord indexer. A mock indexer backed by the DB is used for local dev |
 | Signer | Rust service with no public port. Dry-run by default and **refuses live mode** until a reviewed builder exists |
 | Tests | Vitest + fast-check (economy), real-Postgres ledger tests, Rust unit tests, a wording guard |
@@ -78,6 +78,7 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). In short:
 3. Push all tables: `DATABASE_URL_UNPOOLED=… pnpm db:migrate && DATABASE_URL=… pnpm db:seed`.
 4. Add a Blob store and run `pnpm --filter @zecminers/web media:upload`. Then set `NEXT_PUBLIC_MEDIA_BASE_URL`.
 5. Set `AUTH_SECRET`, the Discord OAuth values, `CLAIM_CODE_PEPPER`, `CRON_SECRET`, Turnstile keys and `ADMIN_DISCORD_IDS`.
+6. In GitHub → Actions secrets/variables, set `CRON_SECRET` and `SITE_URL` to turn on the scheduled jobs.
 
 ## What is done, and what still has to happen before launch
 

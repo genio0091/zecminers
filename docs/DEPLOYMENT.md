@@ -52,7 +52,7 @@ Set these in Project → Settings → Environment Variables. See `.env.example` 
 | `ADMIN_DISCORD_IDS` | Comma-separated Discord user ids with admin rights |
 | `ADMIN_IP_ALLOWLIST` | Optional. Recommended for production (§9.2) |
 | `CLAIM_CODE_PEPPER` | ≥ 16 random characters. **Never change it after importing passes**, or the existing claim codes stop working |
-| `CRON_SECRET` | Random string. Vercel Cron sends it as a Bearer token |
+| `CRON_SECRET` | Random string. The scheduled-jobs workflow sends it as a Bearer token (same value as the GitHub secret) |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile |
 | `REDIS_URL` | Upstash Redis (Vercel Marketplace) for rate limits. Without it, limits are per instance |
 | `ZORD_MODE` | `mock` until the chain server is live, then `live` |
@@ -64,9 +64,30 @@ Set these in Project → Settings → Environment Variables. See `.env.example` 
 
 ## 5. Scheduled jobs
 
-`apps/web/vercel.json` registers Vercel Cron for every job (reserve checks every 5 min, the pass-owner check hourly, and the payout cutoff Mondays 00:00 UTC, among others). Crons more frequent than daily need a **Vercel Pro** plan. On Hobby, run the pg-boss worker (`apps/worker`) on a small VPS instead, and delete the `crons` block. Don't run both.
+Vercel Cron on the **Hobby** plan runs at most once a day, but reserve checks need to run every 5 minutes. So the schedule lives in **GitHub Actions** (`.github/workflows/scheduled-jobs.yml`), which calls `/api/cron/<job>` with `Authorization: Bearer $CRON_SECRET`:
 
-The payout cutoff weekday lives in the economy config (`payout.weekday`). If you change it, also change the cron (`vercel.json` or `CRON_PAYOUT_CUTOFF` for the worker).
+| Schedule (UTC) | Jobs |
+|---|---|
+| every 5 min | `invariants`, `payout-settle`, `raffle-close`, `chain-lag` |
+| hourly :07 | `balance-cache` |
+| hourly :17 | `pass-owners` |
+| Monday 00:00 | `payout-cutoff` |
+
+Setup, once, in GitHub → Settings → Secrets and variables → Actions:
+
+- **Secret** `CRON_SECRET`: the same value as in Vercel
+- **Variable** `SITE_URL`: `https://your-domain`
+
+Any job can also be run by hand from the Actions tab (Run workflow). Every job is idempotent, so a delayed or repeated run is harmless.
+
+Notes:
+
+- Scheduled workflows are free on public repos. A private repo would use about 8,600 Actions minutes a month at this rate; switch to every 15 minutes if you make it private.
+- GitHub pauses schedules in a repo with no activity for 60 days. Any commit re-enables them.
+- On **Vercel Pro** you can use Vercel Cron instead: add a `crons` array to `apps/web/vercel.json` and delete the workflow.
+- On a VPS you can use the pg-boss worker (`apps/worker`) instead.
+
+Run only one scheduler. If you change the payout weekday in the economy config (`payout.weekday`), change the cutoff schedule too.
 
 ## 6. Chain server and signer (off Vercel)
 
