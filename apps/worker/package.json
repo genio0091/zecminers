@@ -14,7 +14,7 @@
   "dependencies": {
     "@zecminers/db": "workspace:*",
     "@zecminers/zord-client": "workspace:*",
-    "pg-boss": "^12.33.4"
+    "pg-boss": "^12.34.0"
   },
   "devDependencies": {
     "@types/node": "^22.20.4",
