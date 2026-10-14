@@ -1,4 +1,4 @@
-import { jobInvariants } from "@zecminers/db";
+import { jobInvariants } from "@hoodvalley/db";
 import { route } from "@/lib/api";
 import { chain } from "@/lib/chain";
 

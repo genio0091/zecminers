@@ -1,4 +1,4 @@
-import { adminOverview, currentTipHeight } from "@zecminers/db";
+import { adminOverview, currentTipHeight } from "@hoodvalley/db";
 import { route } from "@/lib/api";
 import { chain } from "@/lib/chain";
 import { serverEnv } from "@/lib/env";

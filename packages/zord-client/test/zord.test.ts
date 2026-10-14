@@ -15,8 +15,8 @@ describe("ZordClient", () => {
     baseUrl: "http://zord.internal:3000",
     fetch: fakeFetch({
       "/api/v1/status": { height: 3481234 },
-      "/api/v1/tokens/ZGEMS": { data: { tick: "ZGEMS", max: "10000000000", minted: "10000000000", holders: 1, deploy_txid: "ab" } },
-      "/api/v1/tokens/ZGEMS/balances/t1abc": { balance: "9998412905" },
+      "/api/v1/tokens/VALLEY": { data: { tick: "VALLEY", max: "10000000000", minted: "10000000000", holders: 1, deploy_txid: "ab" } },
+      "/api/v1/tokens/VALLEY/balances/t1abc": { balance: "9998412905" },
       "/inscription/i1": { owner: "t1abc", location: "tx:0", content: '{"p":"zrc-721","op":"mint"}' },
       "/api/v1/inscriptions?outpoint=tx%3A1": { items: [{ id: "i9" }] },
       "/api/v1/inscriptions?outpoint=tx%3A2": { unexpected: true },
@@ -25,9 +25,9 @@ describe("ZordClient", () => {
 
   it("maps token, balance and status", async () => {
     expect(await client.status()).toMatchObject({ height: 3481234 });
-    expect(await client.token("ZGEMS")).toMatchObject({ max: 10_000_000_000n, minted: 10_000_000_000n, holders: 1, deployTxid: "ab" });
-    expect(await client.balance("t1abc", "ZGEMS")).toBe(9_998_412_905n);
-    expect(await client.balance("t1none", "ZGEMS")).toBe(0n);
+    expect(await client.token("VALLEY")).toMatchObject({ max: 10_000_000_000n, minted: 10_000_000_000n, holders: 1, deployTxid: "ab" });
+    expect(await client.balance("t1abc", "VALLEY")).toBe(9_998_412_905n);
+    expect(await client.balance("t1none", "VALLEY")).toBe(0n);
   });
 
   it("reads inscription owners", async () => {
@@ -44,9 +44,9 @@ describe("ZordClient", () => {
 describe("MockIndexer", () => {
   it("stores balances and owners", async () => {
     const m = new MockIndexer();
-    m.setBalance("t1x", "ZGEMS", 5n);
+    m.setBalance("t1x", "VALLEY", 5n);
     m.setInscriptionOwner("p1", "t1x");
-    expect(await m.balance("t1x", "ZGEMS")).toBe(5n);
+    expect(await m.balance("t1x", "VALLEY")).toBe(5n);
     expect((await m.inscription("p1"))?.owner).toBe("t1x");
   });
 });

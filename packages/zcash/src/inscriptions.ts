@@ -63,7 +63,7 @@ export function describePayload(payload: string): PayloadReport {
 }
 
 /** The Phase 0 genesis payloads, exactly as in blueprint §6.2. */
-export function genesisPayloads(tick = "ZGEMS", supply = "10000000000") {
+export function genesisPayloads(tick = "VALLEY", supply = "10000000000") {
   return {
     deploy: describePayload(zrc20Deploy(tick, supply, supply)),
     deployWithoutLim: describePayload(zrc20Deploy(tick, supply)),

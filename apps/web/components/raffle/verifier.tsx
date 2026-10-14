@@ -1,6 +1,6 @@
 "use client";
 
-import { drawWinners, seedCommitment, ticketOwner } from "@zecminers/economy";
+import { drawWinners, seedCommitment, ticketOwner } from "@hoodvalley/economy";
 import { useMemo, useState } from "react";
 import { Button, Panel, Well } from "../ui";
 
@@ -63,7 +63,7 @@ export function RaffleVerifier(p: Props) {
             </div>
             {result.winners.map((w, i) => (
               <div key={w.index}>
-                Winner {i + 1}: ticket #{w.index} <span className="text-stone">· holder {w.owner ?? "—"}</span>
+                Winner {i + 1}: entry #{w.index} <span className="text-stone">· holder {w.owner ?? "—"}</span>
               </div>
             ))}
             {matches !== null ? (

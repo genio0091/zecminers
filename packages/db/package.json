@@ -1,5 +1,5 @@
 {
-  "name": "@zecminers/db",
+  "name": "@hoodvalley/db",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -18,9 +18,9 @@
     "team-logins": "tsx scripts/team-logins.ts"
   },
   "dependencies": {
-    "@zecminers/economy": "workspace:*",
-    "@zecminers/zcash": "workspace:*",
-    "@zecminers/zord-client": "workspace:*",
+    "@hoodvalley/economy": "workspace:*",
+    "@hoodvalley/zcash": "workspace:*",
+    "@hoodvalley/zord-client": "workspace:*",
     "drizzle-orm": "^0.45.3",
     "pg": "^8.23.0"
   },

@@ -1,7 +1,7 @@
 /**
  * Upload the gameplay clips to Vercel Blob so they're served from the Blob CDN.
  *
- *   BLOB_READ_WRITE_TOKEN=... pnpm --filter @zecminers/web media:upload
+ *   BLOB_READ_WRITE_TOKEN=... pnpm --filter @hoodvalley/web media:upload
  *
  * Then set NEXT_PUBLIC_MEDIA_BASE_URL to the printed base URL in the Vercel project env.
  */

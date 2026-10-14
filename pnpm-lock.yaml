@@ -10,24 +10,24 @@ importers:
 
   apps/web:
     dependencies:
+      '@hoodvalley/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@hoodvalley/economy':
+        specifier: workspace:*
+        version: link:../../packages/economy
+      '@hoodvalley/zcash':
+        specifier: workspace:*
+        version: link:../../packages/zcash
+      '@hoodvalley/zord-client':
+        specifier: workspace:*
+        version: link:../../packages/zord-client
       '@noble/hashes':
         specifier: ^2.4.0
         version: 2.4.0
       '@vercel/blob':
         specifier: ^2.8.0
         version: 2.8.0
-      '@zecminers/db':
-        specifier: workspace:*
-        version: link:../../packages/db
-      '@zecminers/economy':
-        specifier: workspace:*
-        version: link:../../packages/economy
-      '@zecminers/zcash':
-        specifier: workspace:*
-        version: link:../../packages/zcash
-      '@zecminers/zord-client':
-        specifier: workspace:*
-        version: link:../../packages/zord-client
       drizzle-orm:
         specifier: ^0.45.3
         version: 0.45.3(@types/pg@8.23.1)(pg@8.23.0)
@@ -43,9 +43,6 @@ importers:
       pg:
         specifier: ^8.23.0
         version: 8.23.0
-      phaser:
-        specifier: ^4.2.1
-        version: 4.2.1
       react:
         specifier: ^19.3.0
         version: 19.3.0
@@ -95,10 +92,10 @@ importers:
 
   apps/worker:
     dependencies:
-      '@zecminers/db':
+      '@hoodvalley/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@zecminers/zord-client':
+      '@hoodvalley/zord-client':
         specifier: workspace:*
         version: link:../../packages/zord-client
       pg-boss:
@@ -117,13 +114,13 @@ importers:
 
   packages/db:
     dependencies:
-      '@zecminers/economy':
+      '@hoodvalley/economy':
         specifier: workspace:*
         version: link:../economy
-      '@zecminers/zcash':
+      '@hoodvalley/zcash':
         specifier: workspace:*
         version: link:../zcash
-      '@zecminers/zord-client':
+      '@hoodvalley/zord-client':
         specifier: workspace:*
         version: link:../zord-client
       drizzle-orm:
@@ -2021,9 +2018,6 @@ packages:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
 
-  eventemitter3@5.0.4:
-    resolution: {integrity: sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==}
-
   execa@5.1.1:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
     engines: {node: '>=10'}
@@ -2778,9 +2772,6 @@ packages:
 
   pgpass@1.0.5:
     resolution: {integrity: sha512-FdW9r/jQZhSeohs1Z3sI1yxFQNFvMcnmfuj4WBMUTxOrAyLMaTcE1aAMBiTlbMNaXvBCQuVi0R7hd8udDSP7ug==}
-
-  phaser@4.2.1:
-    resolution: {integrity: sha512-WUNwCPJpdjvZiuT6SgCfYVW8Qw/3j0jJ4ws7P2QkhFLFu74sbGuyHJcbFueGkY/AYO4Pi47bNQXn1OCJeLX//w==}
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -4980,8 +4971,6 @@ snapshots:
 
   esutils@2.0.3: {}
 
-  eventemitter3@5.0.4: {}
-
   execa@5.1.1:
     dependencies:
       cross-spawn: 7.0.6
@@ -5690,10 +5679,6 @@ snapshots:
   pgpass@1.0.5:
     dependencies:
       split2: 4.2.0
-
-  phaser@4.2.1:
-    dependencies:
-      eventemitter3: 5.0.4
 
   picocolors@1.1.1: {}
 

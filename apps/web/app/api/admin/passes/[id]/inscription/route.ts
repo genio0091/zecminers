@@ -1,4 +1,4 @@
-import { setPassInscription } from "@zecminers/db";
+import { setPassInscription } from "@hoodvalley/db";
 import { z } from "zod";
 import { requireUser, route } from "@/lib/api";
 

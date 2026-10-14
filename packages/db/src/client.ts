@@ -28,12 +28,12 @@ export function createDb(url = process.env.DATABASE_URL, max = defaultMax): DbHa
   return { db, pool, close: () => pool.end() };
 }
 
-const globalForDb = globalThis as unknown as { __zecminersDb?: DbHandle };
+const globalForDb = globalThis as unknown as { __hoodValleyDb?: DbHandle };
 
 /** One pool per process (survives Next.js dev hot reloads). */
 export function getDb(): Database {
-  if (!globalForDb.__zecminersDb) globalForDb.__zecminersDb = createDb();
-  return globalForDb.__zecminersDb.db;
+  if (!globalForDb.__hoodValleyDb) globalForDb.__hoodValleyDb = createDb();
+  return globalForDb.__hoodValleyDb.db;
 }
 
 export { schema };

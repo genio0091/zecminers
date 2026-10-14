@@ -1,4 +1,4 @@
-import { toggleMaintenance } from "@zecminers/db";
+import { toggleMaintenance } from "@hoodvalley/db";
 import { z } from "zod";
 import { requireUser, route } from "@/lib/api";
 

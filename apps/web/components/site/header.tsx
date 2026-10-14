@@ -1,77 +1,49 @@
-"use client";
-
 import Link from "next/link";
-import { useState } from "react";
-import { buttonClass, cx } from "../ui";
+import { Logo } from "./logo";
 
-/** Section links live in the landing deck itself; the header only links to other pages. */
-const NAV = [
-  { href: "/", label: "Home" },
-  { href: "/docs", label: "Docs" },
-  { href: "/proof-of-reserves", label: "Proof of reserves" },
-  { href: "/raffles", label: "Raffles" },
+/** Section links point at the landing page, so they also work from the other public pages. */
+const SECTIONS = [
+  { href: "/#lore", label: "Lore" },
+  { href: "/#miners", label: "Miners" },
+  { href: "/#shift", label: "Daily shift" },
+  { href: "/#season", label: "Season 1" },
+  { href: "/#token", label: "$VALLEY" },
+  { href: "/#roadmap", label: "Roadmap" },
+  { href: "/#faq", label: "FAQ" },
 ];
 
-export function Logo({ size = "md" }: { size?: "sm" | "md" }) {
-  return (
-    <span className="flex items-center gap-2.5 text-cream">
-      <span className={cx("block border-3 border-black bg-gold shadow-px-3", size === "md" ? "size-[22px]" : "size-[18px]")} />
-      <span className={cx("font-pixel font-bold tracking-[0.5px]", size === "md" ? "text-2xl" : "text-[22px]")}>ZecMiners</span>
-    </span>
-  );
-}
+const secondary =
+  "block border-2 border-umber px-3.5 py-[11px] font-mono text-xs uppercase tracking-[1.5px] text-cream hover:border-gold hover:text-gold max-[640px]:hidden";
 
 export function SiteHeader() {
-  const [open, setOpen] = useState(false);
   return (
-    <header className="sticky top-0 z-60 flex-none border-b-3 border-black bg-ink/95 shadow-[0_3px_0_rgba(240,168,30,.35)] backdrop-blur-sm">
-      <div className="mx-auto flex max-w-[1400px] items-center gap-5 px-4 py-2.5 sm:px-6">
-        <Link href="/" aria-label="ZecMiners home" className="hover:text-cream">
-          <Logo />
+    <header className="sticky top-0 z-60 border-b-3 border-black bg-night">
+      <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-5 px-6 py-3">
+        <Link href="/#top" aria-label="Hood Valley, back to top" className="text-cream hover:text-cream">
+          <Logo textClass="text-[32px] max-[640px]:text-[26px]" />
         </Link>
-        <nav aria-label="Main" className="ml-auto hidden gap-x-[18px] text-[13px] uppercase tracking-[1px] md:flex">
-          {NAV.slice(1).map((n) => (
-            <Link key={n.href} href={n.href}>
-              {n.label}
+        <nav aria-label="Page sections" className="ml-3 flex gap-[22px] font-mono text-xs uppercase tracking-[1.5px] max-[1060px]:hidden">
+          {SECTIONS.map((s) => (
+            <Link key={s.href} href={s.href}>
+              {s.label}
             </Link>
           ))}
-          <Link href="/play" className="text-moss">
-            Play ▸
+        </nav>
+        <div className="ml-auto flex flex-wrap items-center gap-2.5">
+          <Link href="/litepaper" className={secondary}>
+            Litepaper
           </Link>
-        </nav>
-        {/* plain <a>: a hash change flips the landing deck to the waitlist sheet */}
-        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- intentional, see above */}
-        <a href="/#waitlist" className={buttonClass("gold", "sm", "ml-auto max-sm:hidden md:ml-0")}>
-          Join waitlist
-        </a>
-        <Link href="/play" className={buttonClass("moss", "sm", "ml-auto sm:ml-0 md:hidden")}>
-          Play
-        </Link>
-        <button
-          type="button"
-          className={buttonClass("dark", "sm", "md:hidden")}
-          aria-expanded={open}
-          aria-controls="mobile-nav"
-          onClick={() => setOpen((o) => !o)}
-        >
-          {open ? "✕" : "☰"}
-        </button>
+          <Link href="/play" className={secondary}>
+            Valley HQ
+          </Link>
+          <Link
+            href="/#allowlist"
+            className="block border-3 border-black bg-gold px-4 py-[9px] font-pixel text-2xl leading-none text-night shadow-px-4 transition-[transform,box-shadow] duration-100 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-gold-hi hover:text-night hover:shadow-px-6 max-[640px]:px-3 max-[640px]:py-2 max-[640px]:text-xl"
+          >
+            JOIN ALLOWLIST
+          </Link>
+        </div>
       </div>
-      {open ? (
-        <nav id="mobile-nav" aria-label="Mobile" className="border-t-3 border-black bg-coal md:hidden">
-          <div className="grid gap-1 px-4 py-3 text-sm uppercase tracking-[1px]">
-            {[...NAV, { href: "/play", label: "Play ▸" }].map((n) => (
-              <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className="border-b-3 border-ink py-2">
-                {n.label}
-              </Link>
-            ))}
-            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- plain anchor so the deck sees the hash change */}
-            <a href="/#waitlist" onClick={() => setOpen(false)} className="py-2">
-              Join waitlist
-            </a>
-          </div>
-        </nav>
-      ) : null}
     </header>
   );
 }

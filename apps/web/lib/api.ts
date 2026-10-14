@@ -1,7 +1,7 @@
 import "server-only";
-import { GameError, getDb, getMaintenance, type Database } from "@zecminers/db";
+import { GameError, getDb, getMaintenance, type Database } from "@hoodvalley/db";
 import { eq } from "drizzle-orm";
-import { tables } from "@zecminers/db";
+import { tables } from "@hoodvalley/db";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
@@ -108,7 +108,7 @@ export function route<S extends z.ZodType | undefined = undefined>(
 
       if (opts.mutation && !opts.allowDuringMaintenance) {
         const m = await getMaintenance(db);
-        if (m.on) throw new GameError("MAINTENANCE", "ZecMiners is in maintenance. Balances are safe; actions are paused.");
+        if (m.on) throw new GameError("MAINTENANCE", "Hood Valley is in maintenance. Balances are safe; actions are paused.");
       }
 
       if (opts.rate) {

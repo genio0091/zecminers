@@ -1,5 +1,5 @@
-import type { ChainIndexer, ZebraRpc } from "@zecminers/zord-client";
-import { blockSeconds } from "@zecminers/zcash";
+import type { ChainIndexer, ZebraRpc } from "@hoodvalley/zord-client";
+import { blockSeconds } from "@hoodvalley/zcash";
 import { createHash } from "node:crypto";
 import type { Database } from "../client";
 import { checkBalanceCache, rebuildBalanceCache, runReserveChecks } from "../invariants";

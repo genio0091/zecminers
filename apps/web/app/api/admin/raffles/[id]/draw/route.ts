@@ -1,4 +1,4 @@
-import { blockHashAt, currentTipHeight, drawRaffle, GameError, tables } from "@zecminers/db";
+import { blockHashAt, currentTipHeight, drawRaffle, GameError, tables } from "@hoodvalley/db";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, route } from "@/lib/api";

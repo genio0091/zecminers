@@ -1,4 +1,4 @@
-import { publishEconomyConfig } from "@zecminers/db";
+import { publishEconomyConfig } from "@hoodvalley/db";
 import { z } from "zod";
 import { requireUser, route } from "@/lib/api";
 

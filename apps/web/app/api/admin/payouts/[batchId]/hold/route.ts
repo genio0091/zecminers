@@ -1,4 +1,4 @@
-import { holdBatch } from "@zecminers/db";
+import { holdBatch } from "@hoodvalley/db";
 import { z } from "zod";
 import { requireUser, route } from "@/lib/api";
 

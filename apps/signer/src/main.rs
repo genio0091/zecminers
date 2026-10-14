@@ -1,4 +1,4 @@
-//! ZecMiners payout signer.
+//! Hood Valley payout signer.
 //!
 //! SIGNER_MODE=dry-run (default): list what would be signed, change nothing.
 //! SIGNER_MODE=live: claim approved items and build/broadcast payouts. Refuses to start until a
@@ -25,7 +25,7 @@ fn main() {
         std::process::exit(2);
     });
     let mode = env::var("SIGNER_MODE").unwrap_or_else(|_| "dry-run".into());
-    let tick = env::var("TOKEN_TICK").unwrap_or_else(|_| "ZGEMS".into());
+    let tick = env::var("TOKEN_TICK").unwrap_or_else(|_| "VALLEY".into());
     let poll = Duration::from_secs(env::var("SIGNER_POLL_SECONDS").ok().and_then(|s| s.parse().ok()).unwrap_or(15));
 
     let mut db = queue::connect(&url).unwrap_or_else(|e| {

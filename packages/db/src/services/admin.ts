@@ -1,9 +1,9 @@
-import { runwayDays, TOTAL_SUPPLY } from "@zecminers/economy";
+import { runwayDays, TOTAL_SUPPLY } from "@hoodvalley/economy";
 import { and, desc, eq, gte, ilike, isNotNull, or, sql } from "drizzle-orm";
 import type { Database, DbOrTx } from "../client";
 import { GameError } from "../errors";
 import { latestSnapshot, poolBalances } from "../invariants";
-import { accountBalance, accountHistory, ensureUserAccount, postGenesis, postLedgerTx, userAccountCode } from "../ledger";
+import { accountBalance, accountHistory, ensureUserAccount, postGenesis, postLedgerTx, reallocateLegacyPools, userAccountCode } from "../ledger";
 import { miningSessions, passes, slots, users } from "../schema";
 import {
   audit,
@@ -20,6 +20,7 @@ import {
   REGISTRY_KEYS,
   type RegistryKey,
 } from "../system";
+import { shiftStats } from "./game";
 import { batchOverview, listBatches } from "./payouts";
 
 function requireReason(reason: string | undefined): string {
@@ -28,24 +29,24 @@ function requireReason(reason: string | undefined): string {
   return r;
 }
 
-/** Grant from the marketing pool (blueprint §4.1): admin only, always audited. */
-export async function grantFromMarketing(db: Database, p: { adminId: string; userId: string; amount: bigint; reason: string; idempotencyKey: string }) {
+/** Grant from the community pool (8%: holder benefits, airdrops): admin only, always audited. */
+export async function grantFromCommunity(db: Database, p: { adminId: string; userId: string; amount: bigint; reason: string; idempotencyKey: string }) {
   const reason = requireReason(p.reason);
   if (p.amount <= 0n) throw new GameError("VALIDATION", "Amount must be positive.");
   return db.transaction(async (tx) => {
     const [u] = await tx.select({ id: users.id }).from(users).where(eq(users.id, p.userId));
     if (!u) throw new GameError("NOT_FOUND", "User not found.");
     await ensureUserAccount(tx, p.userId);
-    await audit(tx, { adminId: p.adminId, action: "grant.marketing", payload: { userId: p.userId, amount: p.amount.toString() }, reason });
+    await audit(tx, { adminId: p.adminId, action: "grant.community", payload: { userId: p.userId, amount: p.amount.toString() }, reason });
     const res = await postLedgerTx(tx, {
       idempotencyKey: `grant:${p.idempotencyKey}`,
-      kind: "marketing_grant",
+      kind: "community_grant",
       refType: "user",
       refId: p.userId,
       actor: `admin:${p.adminId}`,
       memo: reason,
       entries: [
-        { account: "pool_marketing", amount: -p.amount },
+        { account: "pool_community", amount: -p.amount },
         { account: userAccountCode(p.userId), amount: p.amount },
       ],
     });
@@ -109,9 +110,13 @@ export async function recordGenesis(
       if (typeof v === "string" && v.trim()) await setRegistry(tx, k as RegistryKey, v.trim());
     }
     let genesis: { txId: number; created: boolean } | null = null;
-    if (p.postLedgerGenesis) genesis = await postGenesis(tx, `admin:${p.adminId}`);
-    await audit(tx, { adminId: p.adminId, action: "genesis.record", payload: { keys: Object.keys(p.entries), ledger: genesis }, reason });
-    return { registry: await getRegistry(tx), genesis };
+    let reallocation: Awaited<ReturnType<typeof reallocateLegacyPools>> | null = null;
+    if (p.postLedgerGenesis) {
+      genesis = await postGenesis(tx, `admin:${p.adminId}`);
+      reallocation = await reallocateLegacyPools(tx, `admin:${p.adminId}`);
+    }
+    await audit(tx, { adminId: p.adminId, action: "genesis.record", payload: { keys: Object.keys(p.entries), ledger: genesis, reallocation }, reason });
+    return { registry: await getRegistry(tx), genesis, reallocation };
   });
 }
 
@@ -173,7 +178,7 @@ export async function listPasses(db: DbOrTx, limit = 50) {
     .limit(limit);
 }
 
-/** Admin dashboard: pools, runway, batch, invariants, alerts, audit (blueprint §7.3, §7.8). */
+/** Admin dashboard: pools, Season 1 runway, batch, invariants, alerts, audit. */
 export async function adminOverview(db: DbOrTx, now: Date) {
   const cfg = await getActiveConfig(db, now);
   const pools = await poolBalances(db);
@@ -186,14 +191,13 @@ export async function adminOverview(db: DbOrTx, now: Date) {
   const [avg] = await db
     .select({
       total: sql<string>`coalesce(sum(${miningSessions.reward}), 0)`,
-      slotDays: sql<number>`count(distinct (${miningSessions.slotId}, ${miningSessions.day}))`,
+      days: sql<number>`count(distinct ${miningSessions.day})`,
     })
     .from(miningSessions)
     .where(and(gte(miningSessions.startedAt, since), isNotNull(miningSessions.collectedAt)));
   const activeSlots = Number(active?.n ?? 0);
-  const observed = Number(avg?.slotDays ?? 0) > 0 ? BigInt(avg!.total) / BigInt(avg!.slotDays) : 0n;
-  const theoretical = BigInt(cfg.params.baseRatePerHour * cfg.params.sessionHours);
-  const avgPerSlotDay = observed > 0n ? observed : theoretical;
+  const observed = Number(avg?.days ?? 0) > 0 ? BigInt(avg!.total) / BigInt(avg!.days) : 0n;
+  const shifts = await shiftStats(db, now);
   const snapshot = await latestSnapshot(db);
   const passCounts = await db
     .select({ status: passes.status, n: sql<number>`count(*)` })
@@ -205,11 +209,13 @@ export async function adminOverview(db: DbOrTx, now: Date) {
     pools: Object.fromEntries(Object.entries(pools).map(([k, v]) => [k, v.toString()])),
     totalSupply: TOTAL_SUPPLY.toString(),
     runway: {
-      days: runwayDays({ poolRemaining: pools.pool_mining ?? 0n, activeSlots, avgRewardPerSlotDay: avgPerSlotDay }),
-      activeSlots,
-      avgRewardPerSlotDay: avgPerSlotDay.toString(),
-      basis: observed > 0n ? "last 7 days" : "theoretical L1 full session",
+      days: runwayDays(pools.pool_mining ?? 0n, cfg.params.dailyPool),
+      activeMiners: activeSlots,
+      claimedPerShift: observed.toString(),
+      dailyPool: String(cfg.params.dailyPool),
+      basis: "Season 1 pool left ÷ daily pool",
     },
+    shifts,
     passes: Object.fromEntries(passCounts.map((p) => [p.status, Number(p.n)])),
     batch: await batchOverview(db),
     batches: await listBatches(db, 8),

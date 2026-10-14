@@ -1,4 +1,4 @@
-import { deactivatePass } from "@zecminers/db";
+import { deactivatePass } from "@hoodvalley/db";
 import { z } from "zod";
 import { requireUser, route } from "@/lib/api";
 

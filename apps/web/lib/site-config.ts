@@ -1,6 +1,6 @@
 import "server-only";
-import { DEV_ECONOMY_PARAMS, WEEKDAYS, type EconomyParams } from "@zecminers/economy";
-import { getActiveConfig, getDb } from "@zecminers/db";
+import { DEV_ECONOMY_PARAMS, WEEKDAYS, type EconomyParams } from "@hoodvalley/economy";
+import { getActiveConfig, getDb } from "@hoodvalley/db";
 
 /** Live economy values for public pages, falling back to the dev example values. */
 export async function siteConfig(): Promise<{ params: EconomyParams; payoutDay: string; version: number }> {

@@ -1,9 +1,9 @@
-import type { getMe, getInventory, payoutHistory, SlotView, listRaffles } from "@zecminers/db";
+import type { getMe, getShift, listRaffles, MinerView, payoutHistory } from "@hoodvalley/db";
 
 /** Response shapes, taken from the server services so client and API can't drift. */
 export type Me = Awaited<ReturnType<typeof getMe>>;
-export type Slot = SlotView;
-export type InventoryItem = Awaited<ReturnType<typeof getInventory>>[number];
+export type Shift = Awaited<ReturnType<typeof getShift>>;
+export type Miner = MinerView;
 export type PayoutRow = Awaited<ReturnType<typeof payoutHistory>>[number];
 export type Raffle = Awaited<ReturnType<typeof listRaffles>>[number];
 
@@ -22,7 +22,7 @@ export interface LedgerRow {
   createdAt: string;
 }
 
-export type Tab = "mine" | "pass" | "payouts" | "raffle" | "ledger" | "proof";
+export type Tab = "shift" | "raffles" | "season" | "wallet";
 
 export interface Notice {
   kind: "good" | "bad" | "info";

@@ -1,4 +1,4 @@
-# API (blueprint §9)
+# API
 
 Every response has the shape `{ ok, data | error: { code, message, details? }, serverTime }`. Amounts are **strings**. Clients never send reward amounts. Countdowns use `serverTime` minus the client clock.
 
@@ -12,33 +12,30 @@ Mutations are POSTs. They are checked for **Origin**, return `MAINTENANCE` while
 | GET | `/api/public/por` | Latest proof-of-reserves snapshot, live treasury (cached 5 min), ledger pools |
 | GET | `/api/public/raffles` | Raffles (the seed is shown only after the draw) |
 | GET | `/api/public/raffles/:id/verify` | Seed, block hash, ticket ranges, winners, formula |
-| POST | `/api/waitlist` 🛡 | Pass waitlist (handle + t1 address, base58check) |
+| POST | `/api/waitlist` 🛡 | Mint allowlist: three tasks, handle, Robinhood Chain wallet (`0x` + 40 hex, stored lower-case) |
 | GET | `/api/health` | DB ping + maintenance flag |
 
 ## Player (signed in: wallet + claim code, or Discord)
 
 | Method | Path | |
 |---|---|---|
-| GET | `/api/me` | Profile, pass, in-game balance, daily streak, next payout, config |
+| GET | `/api/me` | Profile, pass (incl. `isTest`), in-game balance, next payout, config |
 | POST | `/api/wallet/link` 🛡 | Address + one-time claim code, 5 per minute |
-| GET | `/api/slots` | Slots with derived state (idle/mining/ready/broken/repairing/stopped) and timers |
-| POST | `/api/slots/:id/start` | Start today's session (unique per slot per UTC day) |
-| POST | `/api/slots/:id/collect` | Credit the server-computed reward and end the session |
-| POST | `/api/slots/:id/upgrade` 🔑 | Pay the upgrade cost and go up a level (restores durability) |
-| POST | `/api/slots/:id/repair` 🔑 | Pay the repair cost and start the 24 h wait |
-| POST | `/api/daily/claim` | Daily reward and streak |
+| GET | `/api/shift` | Valley HQ in one read: shift clock, today's pool and Miners on shift, your Miners (traits, power, status, share), Season 1 progress, streak, raffle entries, activity |
+| POST | `/api/shift/deploy` | `{ slotIds }`: deploy ready Miners into the open window (one shift per Miner per day; late joins work fewer hours) |
+| POST | `/api/shift/claim` | `{ slotIds? }`: claim every finished shift — share = day's pool × weight ÷ total weight, paid exactly once |
+| POST | `/api/shift/gear` | `{ slotIds? }`: gear up claimed Miners; the first gear-up of a day extends the streak and pays the streak bonus |
 | GET | `/api/ledger?cursor=&limit=` | Ledger history, cursor-paginated |
 | GET | `/api/payouts` | Weekly payout history with txids |
-| GET | `/api/inventory` | Ore inventory and shop rates |
-| POST | `/api/shop/exchange` 🔑 | `{ item, qty }`: ore to $ZGEMS |
-| GET | `/api/raffles` | Raffles, your ticket ranges, tip height |
-| POST | `/api/raffles/:id/tickets` 🔑🛡 | `{ count }` |
+| GET | `/api/raffles` | Raffles, your entry ranges, tip height |
+| POST | `/api/raffles/:id/enter` | Holder raffle (ticket price 0): one free entry per active Miner, once per draw |
+| POST | `/api/raffles/:id/tickets` 🔑🛡 | `{ count }`: paid raffles only, tickets leave circulation |
 
 ## Admin (role + optional IP allowlist; every action writes `admin_audit_log` with a reason)
 
 | Method | Path | |
 |---|---|---|
-| GET | `/api/admin/overview` | Pools, runway, batch, invariants, alerts, audit log, registry, chain tip |
+| GET | `/api/admin/overview` | Pools, Season 1 runway, recent shifts, batch, invariants, alerts, audit log, registry, chain tip |
 | POST | `/api/admin/passes/import` | `{ lines, dryRun, reason }`: returns one-time claim codes **once** |
 | GET | `/api/admin/passes/list` | Passes |
 | POST | `/api/admin/passes/:id/deactivate` | Deactivate a pass in the game (the inscription stays on-chain) |
@@ -47,14 +44,14 @@ Mutations are POSTs. They are checked for **Origin**, return `MAINTENANCE` while
 | POST | `/api/admin/payouts/:batchId/approve` | Approve a batch (refused if maintenance is on or reserves fail) |
 | POST | `/api/admin/payouts/:batchId/hold` | Hold a batch |
 | POST | `/api/admin/config` | Publish a new economy config version |
-| POST | `/api/admin/raffles` | Open a raffle (seed commitment + closing height H) |
+| POST | `/api/admin/raffles` | Open a raffle (seed commitment + draw height H; ticket price 0 = holder raffle) |
 | POST | `/api/admin/raffles/:id/draw` | Draw after block H (block hash from Zebra) |
-| POST | `/api/admin/grants` 🔑 | Grant from the marketing pool |
+| POST | `/api/admin/grants` 🔑 | Grant from the community pool (8%) |
 | GET | `/api/admin/users?q=` · `/api/admin/users/:id` | Search users · user detail + ledger |
 | POST | `/api/admin/users/:id/freeze` | `{ frozen, reason }` |
 | POST | `/api/admin/maintenance` | `{ on, reason }` |
 | POST | `/api/admin/mining` | `{ halted, reason }` |
-| POST | `/api/admin/genesis` | Record the Phase 0 registry and (once) post the genesis ledger transaction |
+| POST | `/api/admin/genesis` | Record the genesis registry and (once) post the genesis ledger transaction; an old 80/10/5/5 genesis is moved into 70/15/8/5/2 |
 | POST | `/api/admin/checks` | Run the reserve checks now |
 | POST | `/api/admin/jobs/:job` | Run any scheduled job now |
 
@@ -64,4 +61,4 @@ Mutations are POSTs. They are checked for **Origin**, return `MAINTENANCE` while
 
 ## Error codes
 
-`PASS_MOVED`, `SLOT_BROKEN`, `SESSION_ALREADY_STARTED`, `POOL_EXHAUSTED`, `INSUFFICIENT_BALANCE`, `MAINTENANCE`, `RATE_LIMITED`, `NO_ACTIVE_SESSION`, `SLOT_MINING`, `MAX_LEVEL`, `REPAIR_NOT_NEEDED`, `REPAIR_IN_PROGRESS`, `ALREADY_CLAIMED`, `NO_PASS`, `PASS_INACTIVE`, `ACCOUNT_FROZEN`, `INVALID_CLAIM`, `INVALID_ADDRESS`, `WALLET_ALREADY_LINKED`, `ADDRESS_TAKEN`, `RAFFLE_CLOSED`, `RAFFLE_NOT_READY`, `BATCH_STATE`, `IDEMPOTENCY_KEY_REQUIRED`, `TURNSTILE_FAILED`, `BAD_ORIGIN`, `VALIDATION`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `INTERNAL`.
+`PASS_MOVED`, `SESSION_ALREADY_STARTED`, `WINDOW_CLOSED`, `SEASON_NOT_STARTED`, `CLAIM_FIRST`, `GEAR_UP_FIRST`, `NOTHING_TO_CLAIM`, `NOTHING_TO_GEAR`, `POOL_EXHAUSTED`, `INSUFFICIENT_BALANCE`, `MAINTENANCE`, `RATE_LIMITED`, `NO_PASS`, `PASS_INACTIVE`, `ACCOUNT_FROZEN`, `INVALID_CLAIM`, `INVALID_ADDRESS`, `WALLET_ALREADY_LINKED`, `ADDRESS_TAKEN`, `RAFFLE_CLOSED`, `RAFFLE_NOT_READY`, `BATCH_STATE`, `IDEMPOTENCY_KEY_REQUIRED`, `TURNSTILE_FAILED`, `BAD_ORIGIN`, `VALIDATION`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `INTERNAL`.

@@ -1,6 +1,6 @@
 import "server-only";
-import { DbMockIndexer, getDb, type JobContext } from "@zecminers/db";
-import { indexerFromEnv, zebraFromEnv, type ChainIndexer, type ZebraRpc } from "@zecminers/zord-client";
+import { DbMockIndexer, getDb, type JobContext } from "@hoodvalley/db";
+import { indexerFromEnv, zebraFromEnv, type ChainIndexer, type ZebraRpc } from "@hoodvalley/zord-client";
 import { serverEnv } from "./env";
 
 let cached: { indexer: ChainIndexer; zebra: ZebraRpc | null } | null = null;

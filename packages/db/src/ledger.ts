@@ -1,4 +1,4 @@
-import { TOTAL_SUPPLY, POOL_ALLOCATION } from "@zecminers/economy";
+import { TOTAL_SUPPLY, POOL_ALLOCATION } from "@hoodvalley/economy";
 import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import type { DbOrTx, Tx } from "./client";
 import { GameError } from "./errors";
@@ -6,9 +6,10 @@ import { ledgerAccounts, ledgerEntries, ledgerTransactions, type AccountType } f
 
 export const SYSTEM_ACCOUNTS = [
   "pool_mining",
-  "pool_daily",
-  "pool_marketing",
   "pool_liquidity",
+  "pool_community",
+  "pool_presale_lp",
+  "pool_team",
   "sink_burned",
   "payout_pending",
   "treasury_backing",
@@ -106,7 +107,7 @@ export async function postLedgerTx(tx: Tx, input: PostLedgerTxInput): Promise<Po
     const next = BigInt(acct.balance) + d;
     if (next < 0n && acct.type !== "treasury_backing") {
       const pool = acct.type.startsWith("pool_");
-      throw new GameError(pool ? "POOL_EXHAUSTED" : "INSUFFICIENT_BALANCE", pool ? "This reward pool is empty (it is funded once at genesis)." : "Not enough $ZGEMS.", {
+      throw new GameError(pool ? "POOL_EXHAUSTED" : "INSUFFICIENT_BALANCE", pool ? "This reward pool is empty (it is funded once at genesis)." : "Not enough $VALLEY.", {
         account: code,
         balance: String(acct.balance),
         needed: String(-d),
@@ -171,7 +172,7 @@ export async function totalUserBalances(db: DbOrTx): Promise<bigint> {
   return BigInt(row?.total ?? "0");
 }
 
-/** Genesis transaction (blueprint §8.2): pools +10B, treasury_backing −10B. */
+/** Genesis transaction: the five pools +10B (70/15/8/5/2), treasury_backing −10B. */
 export async function postGenesis(tx: Tx, actor = "genesis") {
   await ensureSystemAccounts(tx);
   const poolTotal = Object.values(POOL_ALLOCATION).reduce((a, b) => a + b, 0n);
@@ -186,6 +187,53 @@ export async function postGenesis(tx: Tx, actor = "genesis") {
       { account: "treasury_backing", amount: -TOTAL_SUPPLY },
     ],
   });
+}
+
+/** The pre-Hood Valley genesis split (80/10/5/5). */
+const LEGACY_ALLOCATION: Record<string, bigint> = {
+  pool_mining: 8_000_000_000n,
+  pool_daily: 1_000_000_000n,
+  pool_marketing: 500_000_000n,
+  pool_liquidity: 500_000_000n,
+};
+
+/**
+ * A genesis posted before Hood Valley funded the old 80/10/5/5 pools. This moves them into the
+ * 70/15/8/5/2 split in one ledger transaction. Whatever an old pool already paid out counts
+ * against its successor: mining → mining, daily rewards + marketing → community, liquidity →
+ * liquidity. Returns "blocked" (and moves nothing) if a successor pool would go below zero.
+ */
+export async function reallocateLegacyPools(tx: Tx, actor: string): Promise<"done" | "not_needed" | "blocked"> {
+  const codes = [...new Set([...Object.keys(LEGACY_ALLOCATION), ...Object.keys(POOL_ALLOCATION)])];
+  const rows = await tx
+    .select({ code: ledgerAccounts.code, balance: ledgerAccounts.balance })
+    .from(ledgerAccounts)
+    .where(inArray(ledgerAccounts.code, codes));
+  const bal = (code: string) => BigInt(rows.find((r) => r.code === code)?.balance ?? 0);
+  if (bal("pool_daily") === 0n && bal("pool_marketing") === 0n) return "not_needed";
+  const used = (code: string) => LEGACY_ALLOCATION[code]! - bal(code);
+  const target: Record<string, bigint> = {
+    pool_daily: 0n,
+    pool_marketing: 0n,
+    pool_mining: POOL_ALLOCATION.pool_mining - used("pool_mining"),
+    pool_liquidity: POOL_ALLOCATION.pool_liquidity - used("pool_liquidity"),
+    pool_community: POOL_ALLOCATION.pool_community - used("pool_daily") - used("pool_marketing"),
+    pool_presale_lp: POOL_ALLOCATION.pool_presale_lp,
+    pool_team: POOL_ALLOCATION.pool_team,
+  };
+  const fresh = ["pool_community", "pool_presale_lp", "pool_team"].every((code) => bal(code) === 0n);
+  const sane = Object.keys(LEGACY_ALLOCATION).every((code) => used(code) >= 0n);
+  if (!fresh || !sane || Object.values(target).some((v) => v < 0n)) return "blocked";
+  await ensureSystemAccounts(tx);
+  const entries = codes.map((account) => ({ account, amount: target[account]! - bal(account) })).filter((e) => e.amount !== 0n);
+  await postLedgerTx(tx, {
+    idempotencyKey: "reallocate:hood-valley",
+    kind: "pool_reallocation",
+    actor,
+    memo: "Hood Valley tokenomics: 80/10/5/5 → 70/15/8/5/2",
+    entries,
+  });
+  return "done";
 }
 
 export interface LedgerHistoryRow {

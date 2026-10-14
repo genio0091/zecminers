@@ -5,13 +5,11 @@
 const BASE = (process.env.NEXT_PUBLIC_MEDIA_BASE_URL ?? "/media").replace(/\/$/, "");
 
 export const CLIPS = {
-  mineLoop: "mine-loop",
-  rate: "rate-explainer",
-  zandy: "zandy-pass",
+  valleyMap: "valley-map",
   minerCave: "miner-cave",
   minerSun: "miner-sun",
+  zandy: "zandy",
   traits: "traits",
-  uses: "uses",
 } as const;
 
 export type Clip = (typeof CLIPS)[keyof typeof CLIPS];
@@ -22,5 +20,5 @@ export function clipSrc(clip: Clip): string {
 
 /** Posters always ship with the app so first paint never waits on the video host. */
 export function posterSrc(clip: Clip): string {
-  return `/media/posters/${clip}.jpg`;
+  return `/media/posters/${clip}.webp`;
 }

@@ -1,4 +1,4 @@
-import { freezeUser } from "@zecminers/db";
+import { freezeUser } from "@hoodvalley/db";
 import { z } from "zod";
 import { requireUser, route } from "@/lib/api";
 

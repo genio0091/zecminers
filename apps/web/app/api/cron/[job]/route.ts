@@ -1,4 +1,4 @@
-import { JOBS, type JobName } from "@zecminers/db";
+import { JOBS, type JobName } from "@hoodvalley/db";
 import { NextResponse, type NextRequest } from "next/server";
 import { chain } from "@/lib/chain";
 import { serverEnv } from "@/lib/env";

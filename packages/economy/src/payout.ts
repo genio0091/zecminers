@@ -79,7 +79,7 @@ export interface FreezeWindow {
   reason: string;
 }
 
-/** No $ZGEMS transactions ±48 h around NU7 activation (blueprint §2). */
+/** No $VALLEY transfers ±48 h around NU7 activation (blueprint §2). */
 export function inFreezeWindow(at: Date, windows: FreezeWindow[]): FreezeWindow | null {
   const t = at.getTime();
   return windows.find((w) => t >= Date.parse(w.from) && t <= Date.parse(w.to)) ?? null;

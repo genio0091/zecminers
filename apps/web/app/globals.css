@@ -1,38 +1,83 @@
 @import "tailwindcss";
 
-/* Low-height screens (laptops ≤ 820px tall): the landing deck tightens so each sheet fits. */
-@custom-variant short (@media (max-height: 820px));
-
-/* ZecMiners design tokens — lifted from the "ZecMiners Website Redesign" files. */
+/* Hood Valley design tokens — lifted from the "Hood Valley Website Redesign" files. */
 @theme {
-  --color-ink: #0e0b08;
-  --color-ink-2: #0a0806;
-  --color-coal: #17110a;
-  --color-coal-2: #1c150d;
-  --color-coal-3: #140f09;
-  --color-coal-hover: #231a0f;
-  --color-dirt: #2a2109;
-  --color-amber-deep: #c98a16;
+  /* Strata, from the surface down to bedrock. */
+  --color-surface: #f2b949;
+  --color-valley: #235a40;
+  --color-valley-deep: #163a29;
+  --color-valley-lit: #2b6b4e;
+  --color-topsoil: #4e3219;
+  --color-topsoil-2: #3e2713;
+  --color-clay: #3a2614;
+  --color-clay-2: #2c1d0f;
+  --color-rock: #2a1c10;
+  --color-rock-2: #20150b;
+  --color-hardrock: #221709;
+  --color-vault: #1e150b;
+  --color-seam: #150f08;
+  --color-bedrock: #0f0b07;
+  --color-abyss: #0a0705;
+  --color-night: #1a1208;
+  --color-card: #1a130b;
+  --color-unmined: #3d2a16;
+  --color-umber: #5a4428;
+  --color-umber-2: #4a3417;
+  --color-umber-3: #2e2010;
+  --color-shadow-gold: #6b4a12;
+  --color-teal: #2e5f6e;
+  --color-teal-deep: #0f1a1c;
 
-  --color-cream: #fff3d6;
-  --color-sand: #e6d8bc;
-  --color-dust: #cbba98;
-  --color-khaki: #b8a583;
+  /* Light paper (litepaper). */
+  --color-paper: #fff4da;
+  --color-paper-2: #fbebc6;
+  --color-paper-line: #e8d3a4;
+  --color-ink-link: #7a5200;
+  --color-ink-blue: #1f6a88;
+
+  /* Text and accents. */
+  --color-cream: #fff4da;
+  --color-sand: #e6d9b8;
+  --color-dust: #d9c6a0;
+  --color-khaki: #c4ae86;
+  --color-fog: #b39f7c;
   --color-stone: #8e7f63;
+  --color-gold: #f2b949;
+  --color-gold-hi: #ffd77a;
+  --color-gold-pale: #ffe7a6;
+  --color-gold-lo: #c98500;
+  --color-amber: #c98500;
+  --color-sun: #f5c01c;
+  --color-sky: #6fd6f2;
+  --color-sky-deep: #2f9bc4;
+  --color-sky-pale: #b9f1ff;
+  --color-moss: #8bd05a;
+  --color-ember: #ff7a45;
 
-  --color-gold: #f0a81e;
-  --color-gold-hi: #ffc93c;
-  --color-gold-lo: #d98f12;
-  --color-olive: #6b5a22;
-  --color-moss: #8bc34a;
-  --color-ember: #e4572e;
-  --color-sky: #3b82f6;
-  --color-jade: #2e9e5b;
-  --color-grape: #8e5bd9;
+  /* Tokenomics. */
+  --color-alloc-mining: #c98500;
+  --color-alloc-liquidity: #3987e5;
+  --color-alloc-community: #d95926;
+  --color-alloc-presale: #199e70;
+  --color-alloc-team: #9085e9;
+
+  /* Names kept from the first design, now on the Hood Valley palette (admin, reserves, raffles). */
+  --color-ink: #0f0b07;
+  --color-ink-2: #0a0705;
+  --color-coal: #1a130b;
+  --color-coal-2: #20150b;
+  --color-coal-3: #150f08;
+  --color-coal-hover: #2a1c10;
+  --color-dirt: #2a1c10;
+  --color-amber-deep: #c98500;
+  --color-olive: #5a4428;
+  --color-jade: #199e70;
+  --color-grape: #9085e9;
   --color-mint: #5bd9a8;
 
-  --font-pixel: var(--font-pixelify), "Pixelify Sans", ui-monospace, monospace;
-  --font-mono: var(--font-plex), "IBM Plex Mono", ui-monospace, monospace;
+  --font-sans: var(--font-geologica), "Geologica", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-pixel: var(--font-jersey), "Jersey 10", monospace;
+  --font-mono: var(--font-jetbrains), "JetBrains Mono", ui-monospace, monospace;
 
   --shadow-px-2: 2px 2px 0 #000;
   --shadow-px-3: 3px 3px 0 #000;
@@ -40,33 +85,50 @@
   --shadow-px-5: 5px 5px 0 #000;
   --shadow-px-6: 6px 6px 0 #000;
   --shadow-px-8: 8px 8px 0 #000;
+  --shadow-px-10: 10px 10px 0 #000;
 
-  --animate-marquee: zm-marquee 38s linear infinite;
-  --animate-blink: zm-blink 1.6s steps(1, end) infinite;
-  --animate-blink-slow: zm-blink 2.4s steps(1, end) infinite;
-  --animate-stripe: zm-stripe 1.2s linear infinite;
-  --animate-sheet-next: zm-sheet-next 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  --animate-sheet-prev: zm-sheet-prev 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-marquee: hv-marquee 46s linear infinite;
+  --animate-blink: hv-blink 1.6s steps(1, end) infinite;
+  --animate-blink-fast: hv-blink 1.4s steps(1, end) infinite;
+  --animate-drift-slow: hv-drift 80s linear infinite;
+  --animate-drift-slower: hv-drift 120s linear infinite;
+  --animate-fill: hv-fill 12s linear infinite, hv-stripe 1s linear infinite;
+  --animate-stripe: hv-stripe 1s linear infinite;
+  --animate-bob: hv-bob 5s ease-in-out infinite;
+  --animate-sweep: hv-sweep 9s linear infinite;
+  --animate-glow: hv-glow 3.2s ease-in-out infinite;
 
-  @keyframes zm-marquee {
+  @keyframes hv-marquee {
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
   }
-  @keyframes zm-blink {
-    0%, 60% { opacity: 1; }
-    61%, 100% { opacity: 0.15; }
+  @keyframes hv-blink {
+    0%, 55% { opacity: 1; }
+    56%, 100% { opacity: 0.2; }
   }
-  @keyframes zm-sheet-next {
-    from { opacity: 0; transform: translateX(28px); }
-    to { opacity: 1; transform: none; }
+  @keyframes hv-drift {
+    from { transform: translateX(-260px); }
+    to { transform: translateX(1760px); }
   }
-  @keyframes zm-sheet-prev {
-    from { opacity: 0; transform: translateX(-28px); }
-    to { opacity: 1; transform: none; }
+  @keyframes hv-fill {
+    from { width: 0%; }
+    to { width: 100%; }
   }
-  @keyframes zm-stripe {
+  @keyframes hv-stripe {
     from { background-position: 0 0; }
-    to { background-position: 32px 0; }
+    to { background-position: 40px 0; }
+  }
+  @keyframes hv-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  @keyframes hv-sweep {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(180deg); }
+  }
+  @keyframes hv-glow {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 1; }
   }
 }
 
@@ -75,28 +137,40 @@
     scroll-behavior: smooth;
     color-scheme: dark;
   }
+  /* Section anchors land below the sticky header. */
+  [id] {
+    scroll-margin-top: 72px;
+  }
   body {
-    background: var(--color-ink);
+    background: var(--color-bedrock);
     color: var(--color-cream);
-    font-family: var(--font-mono);
-    font-size: 15px;
-    line-height: 1.65;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
   }
   a {
-    color: var(--color-gold-hi);
+    color: var(--color-gold);
     text-decoration: none;
   }
   a:hover {
-    color: var(--color-cream);
+    color: var(--color-gold-hi);
   }
   ::selection {
     background: var(--color-gold);
-    color: var(--color-ink);
+    color: var(--color-night);
   }
-  :focus-visible {
-    outline: 3px solid var(--color-gold-hi);
-    outline-offset: 2px;
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  summary:focus-visible {
+    outline: 3px solid var(--color-sky);
+    outline-offset: 3px;
+  }
+  button:disabled {
+    cursor: not-allowed;
   }
   input,
   textarea,
@@ -109,28 +183,36 @@
   image-rendering: pixelated;
 }
 
-@utility text-shadow-px {
-  text-shadow: 4px 4px 0 #000;
+@utility text-pretty {
+  text-wrap: pretty;
 }
 
-@utility text-shadow-px-lg {
-  text-shadow: 5px 5px 0 #000;
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Gold progress stripes: the shift bar and Miner progress. */
+@utility stripes-gold {
+  background: repeating-linear-gradient(90deg, var(--color-gold) 0 10px, var(--color-gold-lo) 10px 20px);
+}
+
+@utility stripes-sky {
+  background: repeating-linear-gradient(90deg, var(--color-sky) 0 10px, var(--color-sky-deep) 10px 20px);
+}
+
+@utility progress-stripes {
+  background: repeating-linear-gradient(90deg, var(--color-gold) 0 10px, var(--color-gold-lo) 10px 20px);
 }
 
 @utility scanlines {
   background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.28) 0 2px, rgba(0, 0, 0, 0) 2px 4px);
 }
 
-@utility progress-stripes {
-  background: repeating-linear-gradient(90deg, var(--color-gold) 0 12px, var(--color-gold-lo) 12px 24px);
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+    animation: none !important;
     scroll-behavior: auto !important;
   }
 }
