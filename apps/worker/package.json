@@ -1,5 +1,5 @@
 {
-  "name": "@zecminers/worker",
+  "name": "@hoodvalley/worker",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,11 +9,11 @@
     "start": "tsx src/index.ts",
     "once": "tsx --env-file-if-exists=../web/.env.local src/index.ts --once",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "echo \"worker: covered by @zecminers/db tests\""
+    "test": "echo \"worker: covered by @hoodvalley/db tests\""
   },
   "dependencies": {
-    "@zecminers/db": "workspace:*",
-    "@zecminers/zord-client": "workspace:*",
+    "@hoodvalley/db": "workspace:*",
+    "@hoodvalley/zord-client": "workspace:*",
     "pg-boss": "^12.33.4"
   },
   "devDependencies": {

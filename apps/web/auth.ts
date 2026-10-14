@@ -2,7 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import NextAuth, { CredentialsSignin, type DefaultSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Discord from "next-auth/providers/discord";
-import { GameError, getDb, tables, walletSignIn } from "@zecminers/db";
+import { GameError, getDb, tables, walletSignIn } from "@hoodvalley/db";
 import { discordEnabled, serverEnv } from "@/lib/env";
 import { rateLimit } from "@/lib/rate-limit";
 

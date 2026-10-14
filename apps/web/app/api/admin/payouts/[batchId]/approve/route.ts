@@ -1,4 +1,4 @@
-import { approveBatch } from "@zecminers/db";
+import { approveBatch } from "@hoodvalley/db";
 import { z } from "zod";
 import { requireUser, route } from "@/lib/api";
 

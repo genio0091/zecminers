@@ -4,7 +4,7 @@ import {
   DEV_ECONOMY_PARAMS as P,
   drawWinners,
   formatCountdown,
-  formatZgems,
+  formatValley,
   inFreezeWindow,
   isoWeek,
   nextWeeklyCutoff,
@@ -72,8 +72,9 @@ describe("payout planning", () => {
   });
 
   it("caps per user and holds the batch for review", () => {
-    const plan = planPayoutBatch(P, [c("a", 300_000n)]);
-    expect(plan.items[0]!.amount).toBe(250_000n);
+    const cap = BigInt(P.payout.maxPerUser);
+    const plan = planPayoutBatch(P, [c("a", cap + 50_000n)]);
+    expect(plan.items[0]!.amount).toBe(cap);
     expect(plan.items[0]!.carriedOver).toBe(50_000n);
     expect(plan.holdReasons.length).toBe(1);
   });
@@ -99,8 +100,8 @@ describe("time helpers", () => {
   });
 
   it("formats amounts and countdowns", () => {
-    expect(formatZgems(10_000_000_000n)).toBe("10,000,000,000");
-    expect(formatZgems("-1500")).toBe("-1,500");
+    expect(formatValley(10_000_000_000n)).toBe("10,000,000,000");
+    expect(formatValley("-1500")).toBe("-1,500");
     expect(formatCountdown(90_061_000)).toBe("1d 01:01:01");
   });
 });

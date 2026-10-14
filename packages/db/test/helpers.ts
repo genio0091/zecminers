@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { DEV_ECONOMY_PARAMS } from "@zecminers/economy";
-import { encodeTransparentAddress } from "@zecminers/zcash";
+import { DEV_ECONOMY_PARAMS } from "@hoodvalley/economy";
+import { encodeTransparentAddress } from "@hoodvalley/zcash";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import pg from "pg";
@@ -21,8 +21,15 @@ export async function dbAvailable(): Promise<boolean> {
   }
 }
 
-/** Fresh schema per test file: drop everything, run migrations, post genesis. */
-export async function freshDb(): Promise<DbHandle> {
+/** Season 1 for the tests: starts well before the test dates; payout limits out of the way. */
+export const TEST_PARAMS = {
+  ...DEV_ECONOMY_PARAMS,
+  seasonStart: "2026-09-01",
+  payout: { ...DEV_ECONOMY_PARAMS.payout, maxPerUser: 1_000_000_000, maxPerBatch: 9_000_000_000 },
+};
+
+/** Fresh schema: drop everything, run migrations and (by default) post the Hood Valley genesis. */
+export async function freshDb(opts: { genesis?: boolean } = {}): Promise<DbHandle> {
   const admin = new pg.Pool({ connectionString: TEST_URL, max: 1 });
   await admin.query("drop schema if exists public cascade; drop schema if exists drizzle cascade; create schema public;");
   await migrate(drizzle(admin), { migrationsFolder: fileURLToPath(new URL("../drizzle", import.meta.url)) });
@@ -30,8 +37,8 @@ export async function freshDb(): Promise<DbHandle> {
   const handle = createDb(TEST_URL, 20);
   await handle.db.transaction(async (tx) => {
     await ensureSystemAccounts(tx);
-    await publishConfig(tx, DEV_ECONOMY_PARAMS, { activeFrom: new Date(0), createdBy: "test" });
-    await postGenesis(tx, "test");
+    await publishConfig(tx, TEST_PARAMS, { activeFrom: new Date(0), createdBy: "test" });
+    if (opts.genesis !== false) await postGenesis(tx, "test");
   });
   return handle;
 }
@@ -41,7 +48,7 @@ export function addr(label: string) {
 }
 
 let n = 0;
-/** A user with a linked, active pass and a slot — ready to mine. */
+/** A user with an unclaimed pass (claim code ZM-AAAA-BBBB). */
 export async function playerWithPass(h: DbHandle, label = `p${++n}`) {
   const { db } = h;
   const [user] = await db.insert(tables.users).values({ discordId: `d-${label}-${Date.now()}`, discordUsername: label }).returning();

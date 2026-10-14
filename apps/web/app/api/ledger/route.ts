@@ -1,4 +1,4 @@
-import { ledgerHistory } from "@zecminers/db";
+import { ledgerHistory } from "@hoodvalley/db";
 import { requireUser, route } from "@/lib/api";
 
 /** Cursor-paginated ledger history for the signed-in player. */

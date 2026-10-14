@@ -1,9 +1,9 @@
 [package]
-name = "zecminers-signer"
+name = "hood-valley-signer"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.80"
-description = "Isolated payout signer for ZecMiners weekly ZRC-20 payouts (blueprint §10.3). No public port."
+description = "Isolated payout signer for Hood Valley weekly $VALLEY payouts. No public port."
 license = "UNLICENSED"
 publish = false
 

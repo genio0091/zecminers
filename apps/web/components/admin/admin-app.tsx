@@ -3,14 +3,15 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api, fmt, newIdempotencyKey, short } from "@/lib/client-api";
-import { Logo } from "../site/header";
+import { Logo } from "../site/logo";
 import { Bar, Button, FinePrint, Label, Panel, Row, Stat, Well, cx } from "../ui";
 
 type Overview = {
   serverTime: string;
   config: { version: number; activeFrom: string; params: Record<string, unknown> };
   pools: Record<string, string>;
-  runway: { days: number | null; activeSlots: number; avgRewardPerSlotDay: string; basis: string };
+  runway: { days: number | null; activeMiners: number; claimedPerShift: string; dailyPool: string; basis: string };
+  shifts: { day: string; open: boolean; recent: { day: string; miners: number; claimed: string }[]; unclaimedShares: number };
   passes: Record<string, number>;
   batch: {
     id: string;
@@ -111,11 +112,11 @@ export function AdminApp() {
       <header className="sticky top-0 z-40 border-b-3 border-black bg-ink/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-4 px-5 py-2.5">
           <Link href="/" className="hover:text-cream">
-            <Logo size="sm" />
+            <Logo size={28} text="HOOD VALLEY" textClass="text-[26px]" />
           </Link>
           <span className="border-3 border-black bg-coal px-2 text-[10px] tracking-[1.5px] text-gold">ADMIN</span>
           <Link href="/play" className="text-xs text-khaki">
-            ◂ game
+            ◂ Valley HQ
           </Link>
           <div className="ml-auto flex flex-wrap items-center gap-2 text-xs text-khaki">
             <span>
@@ -146,7 +147,7 @@ export function AdminApp() {
             value={o.snapshot ? (o.snapshot.ok ? `${inv.filter((i) => i.ok).length} / ${inv.length} PASS` : "FAILING") : "never run"}
             valueClass={o.snapshot?.ok === false ? "text-ember" : "text-moss"}
           />
-          <Stat label="Mining runway" value={o.runway.days !== null ? `${fmt(o.runway.days)} days` : "—"} valueClass="text-moss" />
+          <Stat label="Season 1 runway" value={o.runway.days !== null ? `${fmt(o.runway.days)} days` : "—"} valueClass="text-moss" />
         </div>
         <div className="flex flex-wrap gap-2.5">
           <Button variant={o.maintenance.on ? "moss" : "ember"} disabled={busy} onClick={() => quick(o.maintenance.on ? "Maintenance off" : "Maintenance on", "/api/admin/maintenance", { on: !o.maintenance.on })}>
@@ -258,15 +259,19 @@ export function AdminApp() {
             </div>
             {o.snapshot ? <FinePrint className="mt-2">Last snapshot {new Date(o.snapshot.takenAt).toISOString().slice(0, 19).replace("T", " ")} UTC</FinePrint> : null}
           </Section>
-          <Section title="Pools & runway" tone="coal-2">
+          <Section title="Pools & Season 1" tone="coal-2">
             <div className="grid gap-2 text-[13px]">
               {Object.entries(o.pools).map(([k, v]) => (
                 <Row key={k} label={k}>
                   <span className="text-gold-hi">{fmt(v)}</span>
                 </Row>
               ))}
-              <Row label="Active slots">{fmt(o.runway.activeSlots)}</Row>
-              <Row label={`Avg reward / slot-day (${o.runway.basis})`}>{fmt(o.runway.avgRewardPerSlotDay)}</Row>
+              <Row label="Active Miners">{fmt(o.runway.activeMiners)}</Row>
+              <Row label="Daily pool">{fmt(o.runway.dailyPool)}</Row>
+              <Row label="Claimed per shift (last 7 days)">{fmt(o.runway.claimedPerShift)}</Row>
+              <Row label={`Shift ${o.shifts.day}`}>{o.shifts.open ? "window open" : "off-shift"}</Row>
+              <Row label="Recent shifts">{o.shifts.recent.map((r) => `${r.day.slice(5)}: ${r.miners}`).join(" · ") || "none yet"}</Row>
+              <Row label="Unclaimed finished shares">{fmt(o.shifts.unclaimedShares)}</Row>
               <Row label="Passes">{Object.entries(o.passes).map(([k, v]) => `${k} ${v}`).join(" · ") || "none"}</Row>
             </div>
           </Section>
@@ -369,7 +374,7 @@ function PassImport({ busy, run }: { busy: boolean; run: Run }) {
                   </div>
                 ))}
               </div>
-              <a download="zecminers-claim-codes.csv" href={`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`}>
+              <a download="hood-valley-claim-codes.csv" href={`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`}>
                 Download CSV ▸
               </a>
             </>
@@ -458,7 +463,7 @@ function TestLogins({ busy, run, quick }: { busy: boolean; run: Run; quick: Quic
               </div>
             ))}
           </div>
-          <a download="zecminers-team-logins.csv" href={`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`}>
+          <a download="hood-valley-team-logins.csv" href={`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`}>
             Download CSV ▸
           </a>
         </div>
@@ -542,7 +547,7 @@ type RaffleRow = { id: number; title: string; status: string; closeBlockHeight: 
 
 function RaffleAdmin({ tip, busy, run, quick }: { tip: number | null; busy: boolean; run: Run; quick: Quick }) {
   const [rows, setRows] = useState<RaffleRow[]>([]);
-  const [f, setF] = useState({ title: "Golden Ticket", ticketPrice: "500", prizeAmount: "25000", winnerCount: 1, closeBlockHeight: (tip ?? 0) + 8_000, reason: "" });
+  const [f, setF] = useState({ title: "Holder raffle", ticketPrice: "0", prizeAmount: "250000", winnerCount: 1, closeBlockHeight: (tip ?? 0) + 8_000, reason: "" });
   const load = useCallback(() => api<RaffleRow[]>("/api/public/raffles").then((r) => r.ok && setRows(r.data)), []);
   useEffect(() => {
     load();
@@ -551,8 +556,8 @@ function RaffleAdmin({ tip, busy, run, quick }: { tip: number | null; busy: bool
     <Section title="Raffles">
       <div className="grid gap-2 sm:grid-cols-2">
         <input className={input} value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} aria-label="Title" />
-        <input className={input} value={f.ticketPrice} onChange={(e) => setF({ ...f, ticketPrice: e.target.value })} aria-label="Ticket price" placeholder="Ticket price" />
-        <input className={input} value={f.prizeAmount} onChange={(e) => setF({ ...f, prizeAmount: e.target.value })} aria-label="Prize (from marketing pool)" placeholder="Prize" />
+        <input className={input} value={f.ticketPrice} onChange={(e) => setF({ ...f, ticketPrice: e.target.value })} aria-label="Ticket price (0 = holder raffle, one free entry per Miner)" placeholder="Ticket price (0 = holder raffle)" />
+        <input className={input} value={f.prizeAmount} onChange={(e) => setF({ ...f, prizeAmount: e.target.value })} aria-label="Prize (from the community pool)" placeholder="Prize" />
         <input className={input} type="number" value={f.winnerCount} onChange={(e) => setF({ ...f, winnerCount: Number(e.target.value) })} aria-label="Winners" />
         <input
           className={input}
@@ -635,7 +640,7 @@ function UsersAdmin({ busy, run, quick }: { busy: boolean; run: Run; quick: Quic
                   size="sm"
                   disabled={busy}
                   onClick={async () => {
-                    const reason = askReason("Grant from marketing pool");
+                    const reason = askReason("Grant from the community pool");
                     if (reason) await run("Grant", "/api/admin/grants", { userId: u.id, amount: grant.amount, reason }, { idem: true });
                     setGrant(null);
                   }}
@@ -657,10 +662,11 @@ function GenesisForm({ registry, busy, run }: { registry: Record<string, string>
   const [reason, setReason] = useState("");
   const pools = Number(Boolean(registry.treasury_address));
   return (
-    <Section title="Genesis registry (Phase 0)">
+    <Section title="Genesis registry">
       <p className="mb-3 mt-0 text-[13px] text-dust">
-        Record the deploy/mint txids, inscription ids and the treasury address after the blueprint §6.4 checks pass in Zord. Post the genesis ledger transaction
-        exactly once — it funds the pools 80/10/5/5 against the on-chain treasury.
+        Record the deploy/mint txids, inscription ids and the treasury address once they are confirmed on-chain. Posting the genesis ledger transaction funds the
+        pools 70/15/8/5/2 against the treasury and starts Season 1 on that day (unless the config sets a season start date). It is idempotent, and an older
+        80/10/5/5 genesis is moved into the new split automatically.
       </p>
       <div className="grid gap-2 md:grid-cols-2">
         {REGISTRY_FIELDS.map((k) => (

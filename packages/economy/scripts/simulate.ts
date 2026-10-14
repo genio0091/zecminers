@@ -1,19 +1,18 @@
 /**
- * Economy simulation (blueprint §12.1): N users × D days with a given config →
- * emission curve, mining-pool runway and weekly payout cost.
+ * Economy simulation: N Miners × D days with the dev config → Season 1 emission curve, pool
+ * runway, streak spend from the community pool and weekly payout cost.
  *
- *   pnpm simulate -- --users 1000 --days 365 --collect 0.8 --zec-usd 1500
+ *   pnpm simulate -- --miners 3333 --days 200 --deploy 0.8 --late 0.3 --zec-usd 1500
  */
 import {
   DEV_ECONOMY_PARAMS,
   POOL_ALLOCATION,
-  computeReward,
-  dailyReward,
-  formatZgems,
-  repairCost,
-  sessionDurationMs,
-  upgradeCost,
-  durabilityMax,
+  BP,
+  formatValley,
+  minerTraits,
+  minerWeight,
+  shiftShare,
+  streakBonus,
 } from "../src";
 
 function arg(name: string, fallback: number): number {
@@ -22,113 +21,80 @@ function arg(name: string, fallback: number): number {
   return Number.isFinite(v) ? v : fallback;
 }
 
-const users = arg("users", 1000);
-const days = arg("days", 365);
-const collectRate = arg("collect", 0.8); // share of users who mine on a given day
-const dailyRate = arg("daily", 0.7); // share who claim the daily reward
+const minerCount = arg("miners", 3_333);
+const days = arg("days", 200);
+const deployRate = arg("deploy", 0.8); // share of Miners that work a given shift
+const lateRate = arg("late", 0.3); // share of those that join part-way through the window
 const zecUsd = arg("zec-usd", 1500);
-const feeZecPerPayout = arg("fee-zec", 0.0003); // blueprint §10.5: 0.0002–0.0004 ZEC
+const feeZecPerPayout = arg("fee-zec", 0.0003);
 
 const P = DEV_ECONOMY_PARAMS;
-type Player = { level: number; durability: number; balance: bigint; streak: number; brokenDays: number };
-const players: Player[] = Array.from({ length: users }, () => ({
-  level: 1,
-  durability: durabilityMax(P, 1),
-  balance: 0n,
-  streak: 0,
-  brokenDays: 0,
-}));
+type Miner = { powerBp: number; balance: bigint; streak: number };
+const miners: Miner[] = Array.from({ length: minerCount }, (_, i) => ({ powerBp: minerTraits(i + 1).powerBp, balance: 0n, streak: 0 }));
 
 let miningPool = POOL_ALLOCATION.pool_mining;
-let dailyPool = POOL_ALLOCATION.pool_daily;
-let burned = 0n;
+let communityPool = POOL_ALLOCATION.pool_community;
 let paidOut = 0n;
 let payoutCount = 0;
+let mineOutDay: number | null = null;
 const rows: string[] = [];
 
 for (let day = 1; day <= days; day++) {
-  let minedToday = 0n;
-  for (const p of players) {
-    if (Math.random() < dailyRate) {
-      p.streak = Math.min(p.streak + 1, P.dailyStreakMax);
-      const d = dailyReward(P, p.streak);
-      if (dailyPool >= d) {
-        dailyPool -= d;
-        p.balance += d;
-      }
-    } else {
-      p.streak = 0;
-    }
-
-    if (p.brokenDays > 0) {
-      p.brokenDays--;
+  const working: { m: Miner; weight: number }[] = [];
+  for (const m of miners) {
+    if (Math.random() >= deployRate) {
+      m.streak = 0;
       continue;
     }
-    if (Math.random() < collectRate && miningPool > 0n) {
-      const elapsed = sessionDurationMs(P) * (0.5 + Math.random() * 0.5);
-      let r = computeReward({ params: P, level: p.level, elapsedMs: elapsed });
-      if (r > miningPool) r = miningPool;
-      miningPool -= r;
-      p.balance += r;
-      minedToday += r;
-      if (P.pickaxeEnabled) p.durability--;
-    }
-
-    const cost = upgradeCost(P, p.level);
-    if (cost !== null && p.balance >= BigInt(cost) * 2n) {
-      p.balance -= BigInt(cost);
-      burned += BigInt(cost);
-      p.level++;
-      p.durability = durabilityMax(P, p.level);
-    } else if (p.durability <= 0) {
-      const rc = BigInt(repairCost(P, p.level));
-      if (p.balance >= rc) {
-        p.balance -= rc;
-        burned += rc;
-        p.durability = durabilityMax(P, p.level);
-        p.brokenDays = Math.ceil(P.repairWaitHours / 24);
-      }
-    }
-    // Occasional raffle ticket
-    if (Math.random() < 0.05 && p.balance >= BigInt(P.raffleTicketPrice)) {
-      p.balance -= BigInt(P.raffleTicketPrice);
-      burned += BigInt(P.raffleTicketPrice);
+    const worked = Math.random() < lateRate ? Math.floor(BP * (0.2 + Math.random() * 0.8)) : BP;
+    working.push({ m, weight: minerWeight(P.traitPowerEnabled ? m.powerBp : BP, worked) });
+  }
+  const totalWeight = working.reduce((a, w) => a + w.weight, 0);
+  const pool = BigInt(P.dailyPool) > miningPool ? miningPool : BigInt(P.dailyPool);
+  let minedToday = 0n;
+  for (const { m, weight } of working) {
+    const share = shiftShare(pool, weight, totalWeight);
+    minedToday += share;
+    m.balance += share;
+    m.streak += 1;
+    const bonus = streakBonus(P, m.streak);
+    if (bonus > 0n && communityPool >= bonus) {
+      communityPool -= bonus;
+      m.balance += bonus;
     }
   }
+  miningPool -= minedToday;
+  if (miningPool === 0n && mineOutDay === null) mineOutDay = day;
 
   if (day % 7 === 0) {
-    let batch = 0n;
-    for (const p of players) {
-      if (p.balance >= BigInt(P.payout.minimum)) {
-        const amt = p.balance > BigInt(P.payout.maxPerUser) ? BigInt(P.payout.maxPerUser) : p.balance;
-        p.balance -= amt;
-        batch += amt;
+    for (const m of miners) {
+      if (m.balance >= BigInt(P.payout.minimum)) {
+        const amt = m.balance > BigInt(P.payout.maxPerUser) ? BigInt(P.payout.maxPerUser) : m.balance;
+        m.balance -= amt;
+        paidOut += amt;
         payoutCount++;
       }
     }
-    paidOut += batch;
   }
 
   if (day % 30 === 0 || day === days) {
-    const avg = minedToday / BigInt(Math.max(1, users));
-    const runway = minedToday > 0n ? Number(miningPool / minedToday) : Infinity;
+    const avg = working.length ? minedToday / BigInt(working.length) : 0n;
     rows.push(
       [
         String(day).padStart(4),
-        formatZgems(miningPool).padStart(15),
-        formatZgems(minedToday).padStart(11),
-        formatZgems(avg).padStart(7),
-        String(runway).padStart(8),
-        formatZgems(paidOut).padStart(15),
-        formatZgems(burned).padStart(13),
+        formatValley(miningPool).padStart(15),
+        formatValley(minedToday).padStart(12),
+        formatValley(avg).padStart(9),
+        formatValley(communityPool).padStart(13),
+        formatValley(paidOut).padStart(15),
       ].join("  "),
     );
   }
 }
 
 const feeZec = payoutCount * feeZecPerPayout;
-console.log(`ZecMiners economy simulation — ${users} users × ${days} days (dev config)`);
-console.log("day   mining pool left   mined/day  avg/usr  runway(d)  paid out total  burned (sink)");
+console.log(`Hood Valley Season 1 simulation — ${minerCount} Miners × ${days} days (dev config)`);
+console.log("day   mining pool left   mined/shift  avg/miner  community left  paid out total");
 for (const r of rows) console.log(r);
-console.log(`\npayouts: ${payoutCount}, network fees ≈ ${feeZec.toFixed(4)} ZEC ≈ $${(feeZec * zecUsd).toFixed(0)} at $${zecUsd}/ZEC`);
-console.log(`daily pool left: ${formatZgems(dailyPool)}`);
+console.log(`\nSeason 1 mined out: ${mineOutDay ? `day ${mineOutDay}` : `not within ${days} days`}`);
+console.log(`payouts: ${payoutCount}, network fees ≈ ${feeZec.toFixed(4)} ZEC ≈ $${(feeZec * zecUsd).toFixed(0)} at $${zecUsd}/ZEC`);

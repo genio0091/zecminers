@@ -1,6 +1,6 @@
 /**
  * What the rest of the system needs from the indexer. Zord is the single source of truth for
- * $ZGEMS balances and pass ownership (blueprint §3.2). The browser never calls it directly.
+ * $VALLEY balances and pass ownership (blueprint §3.2). The browser never calls it directly.
  */
 export interface IndexerStatus {
   /** Highest block height the indexer has processed. */

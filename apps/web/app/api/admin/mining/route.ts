@@ -1,4 +1,4 @@
-import { setMiningHalted } from "@zecminers/db";
+import { setMiningHalted } from "@hoodvalley/db";
 import { z } from "zod";
 import { requireUser, route } from "@/lib/api";
 

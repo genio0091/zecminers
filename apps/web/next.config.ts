@@ -45,8 +45,12 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  transpilePackages: ["@zecminers/db", "@zecminers/economy", "@zecminers/zcash", "@zecminers/zord-client"],
+  transpilePackages: ["@hoodvalley/db", "@hoodvalley/economy", "@hoodvalley/zcash", "@hoodvalley/zord-client"],
   serverExternalPackages: ["pg", "ioredis"],
+  async redirects() {
+    // The docs page became the Hood Valley litepaper.
+    return [{ source: "/docs", destination: "/litepaper", permanent: true }];
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

@@ -1,4 +1,4 @@
-import { audit, GameError, JOBS, type JobName } from "@zecminers/db";
+import { audit, GameError, JOBS, type JobName } from "@hoodvalley/db";
 import { z } from "zod";
 import { requireUser, route } from "@/lib/api";
 import { chain } from "@/lib/chain";

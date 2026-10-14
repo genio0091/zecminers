@@ -126,5 +126,5 @@ export const ADDRESS_ERROR_MESSAGES: Record<Exclude<AddressCheck, { ok: true }>[
   format: "That does not look like a transparent t1 address.",
   checksum: "Address checksum failed. Copy it again from your wallet.",
   network: "That address is for a different Zcash network.",
-  kind: "Use the t1… address from a ZRC-20 wallet such as Zatoshi Wallet.",
+  kind: "Use the t1… pass address exactly as you received it.",
 };

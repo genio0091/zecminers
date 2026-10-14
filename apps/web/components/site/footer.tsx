@@ -1,67 +1,85 @@
 import Link from "next/link";
-import { TRADING_LINE } from "@/lib/content";
-import { Logo } from "./header";
+import { Logo } from "./logo";
 
-const COLS = [
+const X_URL = process.env.NEXT_PUBLIC_X_URL;
+const DISCORD_URL = process.env.NEXT_PUBLIC_DISCORD_URL;
+
+const COLS: { title: string; links: { href: string; label: string }[] }[] = [
   {
-    title: "Game",
+    title: "GAME",
     links: [
-      { href: "/#play", label: "How you play" },
-      { href: "/#payouts", label: "Weekly payouts" },
-      { href: "/#pass", label: "Whitelist Pass" },
-      { href: "/play", label: "Play" },
-      { href: "/#waitlist", label: "Join the waitlist" },
+      { href: "/#lore", label: "The lore" },
+      { href: "/#miners", label: "Valley Miners" },
+      { href: "/#shift", label: "The daily shift" },
+      { href: "/#season", label: "Season 1" },
     ],
   },
   {
-    title: "Token",
+    title: "TOKEN",
     links: [
-      { href: "/#token", label: "$ZGEMS supply" },
+      { href: "/#token", label: "$VALLEY tokenomics" },
+      { href: "/#benefits", label: "Holder benefits" },
+      { href: "/#season2", label: "Season 2" },
+      { href: "/#roadmap", label: "Launch status" },
+    ],
+  },
+  {
+    title: "PROJECT",
+    links: [
+      { href: "/litepaper", label: "Litepaper" },
+      { href: "/play", label: "Valley HQ" },
+      { href: "/#allowlist", label: "Allowlist" },
+      { href: "/raffles", label: "Raffle draws" },
       { href: "/proof-of-reserves", label: "Proof of reserves" },
-      { href: "/raffles", label: "Raffle verification" },
-      { href: "/docs", label: "Documentation" },
-      { href: "/#faq", label: "FAQ" },
-    ],
-  },
-  {
-    title: "Follow",
-    links: [
-      { href: process.env.NEXT_PUBLIC_X_URL ?? "/#waitlist", label: "X / Twitter" },
-      { href: process.env.NEXT_PUBLIC_DISCORD_URL ?? "/#waitlist", label: "Discord" },
     ],
   },
 ];
 
+function Social({ label, url }: { label: string; url: string | undefined }) {
+  if (!url) return <span className="text-khaki">{label} · coming soon</span>;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer">
+      {label}
+    </a>
+  );
+}
+
 export function SiteFooter() {
   return (
-    <footer className="bg-ink-2 pb-10 pt-14">
-      <div className="mx-auto grid max-w-[1180px] grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-8 px-4 sm:px-6">
+    <footer className="border-t-3 border-night bg-abyss pb-10 pt-14">
+      <div className="mx-auto grid max-w-[1280px] grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-8 px-6">
         <div>
-          <Logo size="sm" />
-          <p className="mt-3 max-w-[280px] text-[13px] text-stone">
-            A pixel mining game on Zcash. $ZGEMS is a ZRC-20 token, mined in the browser and paid out weekly.
+          <Logo textClass="text-[30px]" />
+          <p className="mt-3 mb-0 max-w-[280px] text-sm text-khaki">
+            Mine the frontier. An on-chain mining game on Robinhood Chain, powered by 3,333 Valley Miners and $VALLEY.
           </p>
         </div>
         {COLS.map((c) => (
-          <div key={c.title} className="grid content-start gap-2 text-[13.5px]">
-            <div className="text-[11px] uppercase tracking-[2px] text-khaki">{c.title}</div>
+          <nav key={c.title} aria-label={c.title.toLowerCase()} className="grid content-start gap-2 text-[14.5px]">
+            <div className="font-mono text-[11px] tracking-[2px] text-khaki">{c.title}</div>
             {c.links.map((l) => (
               <Link key={l.label} href={l.href}>
                 {l.label}
               </Link>
             ))}
-          </div>
+            {c.title === "PROJECT" ? (
+              <>
+                <Social label="X" url={X_URL} />
+                <Social label="Discord" url={DISCORD_URL} />
+              </>
+            ) : null}
+          </nav>
         ))}
       </div>
-      <div className="mx-auto mt-8 grid max-w-[1180px] gap-2 border-t-3 border-coal px-4 pt-5 text-xs text-stone sm:px-6">
+      <div className="mx-auto mt-9 grid max-w-[1280px] gap-2 border-t-2 border-night px-6 pt-5 text-[12.5px] leading-[1.6] text-fog">
         <p className="m-0">
-          Keep your pass and your $ZGEMS in a ZRC-20 wallet such as Zatoshi Wallet. Wallets that select coins blindly, including ordinary Zcash wallets, can spend
-          an inscription and destroy it permanently.
+          Hood Valley is an independent project built on Robinhood Chain. It is not affiliated with, endorsed by or sponsored by Robinhood Markets, Inc.
         </p>
         <p className="m-0">
-          {TRADING_LINE} Nothing on this site is financial advice or a promise of value, and parameters marked as examples can change before launch.
+          Nothing on this site is financial advice or a promise of value. Mint dates, prices, contract addresses, audit reports and shift snapshot times are TBA and
+          are confirmed before public release.
         </p>
-        <p className="m-0">ZecMiners is an independent project and is not affiliated with or endorsed by any Zcash development organization.</p>
+        <p className="m-0">© 2026 Hood Valley</p>
       </div>
     </footer>
   );

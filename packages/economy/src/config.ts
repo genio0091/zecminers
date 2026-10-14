@@ -1,82 +1,97 @@
 import { z } from "zod";
-import { MAX_LEVEL } from "./constants";
-
-const perLevel = z.array(z.number().int().positive()).length(MAX_LEVEL);
-const oreRecord = z.object({
-  goldstone: z.number().int().min(0),
-  grapestone: z.number().int().min(0),
-  mint_stone: z.number().int().min(0),
-});
+import { SEASON_1, SEASON_1_DAILY_POOL } from "./constants";
 
 /**
- * Economy parameters, stored as a versioned row in `economy_config` (blueprint §7.4).
- * Everything is an integer; multipliers and probabilities are basis points.
- * A change applies from the next session because each session records its config version.
+ * Economy parameters, stored as a versioned row in `economy_config`.
+ * Everything is an integer; multipliers are basis points. A shift uses the version that was
+ * active when its window opened, so a change never moves the goalposts mid-shift.
  */
 export const economyParamsSchema = z.object({
-  sessionHours: z.number().int().min(1).max(24),
-  baseRatePerHour: z.number().int().min(0).max(1_000_000),
-  /** Index 0 = level 1. 10_000 = 1.00× */
-  levelMultiplierBp: perLevel,
-  /** Cost to go from level n to n+1, n = 1..4 */
-  upgradeCost: z.array(z.number().int().min(0)).length(MAX_LEVEL - 1),
-  /** Sessions per pickaxe, index 0 = level 1 */
-  durabilityMax: perLevel,
-  /** Decision #14: pickaxe mechanic can be switched off without a deploy. */
-  pickaxeEnabled: z.boolean(),
-  repairCostPerLevel: z.number().int().min(0),
-  repairWaitHours: z.number().int().min(0).max(168),
-  dailyBase: z.number().int().min(0),
-  /** +bonus per consecutive day, 1_000 = +10% */
-  dailyStreakBonusBp: z.number().int().min(0).max(100_000),
-  dailyStreakMax: z.number().int().min(1).max(30),
-  /** Drop chance per session, 3_000 = 30% */
-  oreDropBp: oreRecord,
-  /** $ZGEMS paid per ore in the shop [TBA]; 0 disables that exchange. */
-  oreExchange: oreRecord,
-  raffleTicketPrice: z.number().int().min(1),
+  /** Length of the daily mining window. */
+  shiftHours: z.number().int().min(1).max(23),
+  /** UTC hour the window opens every day. Exact times are confirmed before launch. */
+  shiftOpenHourUtc: z.number().int().min(0).max(23),
+  /** $VALLEY split between every Miner that worked a shift (Season 1: 7B / 180 days). */
+  dailyPool: z.number().int().min(0),
+  /** Planned season length, for the season clock. The season really ends when the pool is mined out. */
+  seasonDays: z.number().int().min(1).max(3650),
+  /** First shift day (UTC, YYYY-MM-DD). Null until announced: the season then starts on the genesis day. */
+  seasonStart: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable(),
+  /** Off: every Miner counts as 1.00× until the final trait mechanics are confirmed. */
+  traitPowerEnabled: z.boolean(),
+  /** Paid from the community pool on a player's first gear-up of a shift day. 0 switches it off. */
+  streakBonusBase: z.number().int().min(0),
+  /** Extra per consecutive day, 1_000 = +10%. */
+  streakBonusStepBp: z.number().int().min(0).max(100_000),
+  /** The bonus stops growing after this many days (the streak itself keeps counting). */
+  streakBonusMaxDays: z.number().int().min(1).max(30),
+  /** Default ticket price for paid raffles. Holder raffles (price 0) give one free entry per Miner. */
+  raffleTicketPrice: z.number().int().min(0),
   payout: z.object({
     /** 0 = Sunday … 6 = Saturday; cutoff is 00:00 UTC on this day. */
     weekday: z.number().int().min(0).max(6),
-    /** Balances below this roll into the next batch (decision #12). */
+    /** Balances below this roll into the next batch. */
     minimum: z.number().int().min(0),
     maxPerUser: z.number().int().min(1),
     maxPerBatch: z.number().int().min(1),
-    /** [TBA] Pay the remaining balance of a moved pass one last time. */
+    /** Pay the remaining balance of a moved pass one last time. */
     payMovedPasses: z.boolean(),
   }),
-  /** Decision #11: where spent tokens go. "burn" is the recommendation. */
+  /** Where spent tokens (paid raffle tickets) go. */
   sinkMode: z.enum(["burn", "recycle"]),
 });
 
 export type EconomyParams = z.infer<typeof economyParamsSchema>;
 
-/** Development example values from blueprint §7.4. Not final economics. */
+/** Development values. Shift times and streak bonus sizes are confirmed before launch. */
 export const DEV_ECONOMY_PARAMS: EconomyParams = {
-  sessionHours: 12,
-  baseRatePerHour: 50,
-  levelMultiplierBp: [10_000, 12_500, 15_000, 20_000, 25_000],
-  upgradeCost: [2_000, 6_000, 15_000, 40_000],
-  durabilityMax: [10, 14, 20, 28, 40],
-  pickaxeEnabled: true,
-  repairCostPerLevel: 150,
-  repairWaitHours: 24,
-  dailyBase: 100,
-  dailyStreakBonusBp: 1_000,
-  dailyStreakMax: 7,
-  oreDropBp: { goldstone: 3_000, grapestone: 1_000, mint_stone: 300 },
-  oreExchange: { goldstone: 20, grapestone: 75, mint_stone: 400 },
-  raffleTicketPrice: 500,
+  shiftHours: 12,
+  shiftOpenHourUtc: 0,
+  dailyPool: SEASON_1_DAILY_POOL,
+  seasonDays: SEASON_1.days,
+  seasonStart: null,
+  traitPowerEnabled: true,
+  streakBonusBase: 500,
+  streakBonusStepBp: 1_000,
+  streakBonusMaxDays: 7,
+  raffleTicketPrice: 0,
   payout: {
     weekday: 1,
     minimum: 1_000,
-    maxPerUser: 250_000,
-    maxPerBatch: 50_000_000,
+    maxPerUser: 50_000_000,
+    maxPerBatch: 400_000_000,
     payMovedPasses: true,
   },
   sinkMode: "burn",
 };
 
+/**
+ * Config rows written before the Hood Valley shift model (session/level/pickaxe params) are
+ * read as the new shape: the shift length and payout schedule carry over, everything else —
+ * including the payout limits, which were sized for a much smaller emission — takes the defaults.
+ */
+function upgradeLegacyParams(input: unknown): unknown {
+  if (!input || typeof input !== "object") return input;
+  const raw = input as Record<string, unknown>;
+  if ("shiftHours" in raw || !("sessionHours" in raw)) return input;
+  const old = (raw.payout && typeof raw.payout === "object" ? raw.payout : {}) as Record<string, unknown>;
+  const base = DEV_ECONOMY_PARAMS.payout;
+  return {
+    ...DEV_ECONOMY_PARAMS,
+    shiftHours: typeof raw.sessionHours === "number" && raw.sessionHours < 24 ? raw.sessionHours : DEV_ECONOMY_PARAMS.shiftHours,
+    payout: {
+      ...base,
+      weekday: typeof old.weekday === "number" ? old.weekday : base.weekday,
+      minimum: typeof old.minimum === "number" ? old.minimum : base.minimum,
+      payMovedPasses: typeof old.payMovedPasses === "boolean" ? old.payMovedPasses : base.payMovedPasses,
+    },
+    sinkMode: raw.sinkMode === "recycle" ? "recycle" : "burn",
+  };
+}
+
 export function parseEconomyParams(input: unknown): EconomyParams {
-  return economyParamsSchema.parse(input);
+  return economyParamsSchema.parse(upgradeLegacyParams(input));
 }

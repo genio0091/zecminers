@@ -1,4 +1,4 @@
-import { recordGenesis, REGISTRY_KEYS } from "@zecminers/db";
+import { recordGenesis, REGISTRY_KEYS } from "@hoodvalley/db";
 import { z } from "zod";
 import { requireUser, route } from "@/lib/api";
 

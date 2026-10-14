@@ -6,8 +6,8 @@ import { usePrefersReducedMotion } from "@/lib/use-clock";
 import { cx } from "./ui";
 
 /**
- * Clips are ~5 MB each: load one only when it's near the viewport, and never autoplay
- * for people who asked for reduced motion (they get the poster frame).
+ * Below-the-fold clips load only when they get near the viewport, and never autoplay for
+ * people who asked for reduced motion (they get the poster frame).
  */
 export function LazyVideo({
   clip,
@@ -19,6 +19,7 @@ export function LazyVideo({
   clip: Clip;
   className?: string;
   eager?: boolean;
+  /** Empty for decorative clips (hidden from screen readers). */
   label: string;
   style?: React.CSSProperties;
 }) {
@@ -58,7 +59,8 @@ export function LazyVideo({
       playsInline
       autoPlay={!!src}
       preload={eager ? "auto" : "none"}
-      aria-label={label}
+      aria-label={label || undefined}
+      aria-hidden={label ? undefined : true}
       className={cx("block w-full object-cover pixelated", className)}
       style={style}
     />

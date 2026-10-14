@@ -33,7 +33,7 @@ Migrations are never run automatically on deploy. Run `pnpm db:migrate` whenever
 2. Upload the seven clips:
 
    ```bash
-   BLOB_READ_WRITE_TOKEN=… pnpm --filter @zecminers/web media:upload
+   BLOB_READ_WRITE_TOKEN=… pnpm --filter @hoodvalley/web media:upload
    ```
 
 3. Set the printed `NEXT_PUBLIC_MEDIA_BASE_URL=https://<store>.public.blob.vercel-storage.com/media` and redeploy. The CSP automatically allows that origin for `media-src`. Posters always ship with the app.
@@ -63,7 +63,11 @@ Set these in Project → Settings → Environment Variables. See `.env.example` 
 
 `AUTH_DEV_LOGIN` is ignored in production builds.
 
-**Sign-in.** Players sign in with the t1 address their pass was airdropped to plus its claim code. The first sign-in creates the account, links the address and opens the slot; after that the claim code is the player's password. A leaked code can't redirect tokens (payouts only go to the origin address), but it would let someone spend that player's in-game balance, so tell winners to keep it private. Discord login can be switched on later without code changes.
+**Sign-in.** Players sign in to Valley HQ (`/play`) with the address their pass is registered to plus its claim code — the same two columns as the team-logins CSV (`pnpm --filter @hoodvalley/db team-logins`). The first sign-in creates the account, links the address and opens its Valley Miner; after that the claim code is the player's password. A leaked code can't redirect tokens (payouts only go to the origin address), but it would let someone spend that player's in-game balance, so tell winners to keep it private. Discord login can be switched on later without code changes.
+
+**Upgrading a ZecMiners deployment to Hood Valley.** Run `pnpm db:migrate` (adds shift weights, gear-up and `shift_days`, and the new pool accounts) and then `pnpm db:seed`. The seed moves an already-posted 80/10/5/5 genesis into the 70/15/8/5/2 pools in one ledger transaction, carrying over whatever the old pools already paid out. Existing passes, claim codes and test logins keep working unchanged.
+
+**Season 1 clock.** The economy config sets the window (`shiftOpenHourUtc`, `shiftHours`), the daily pool (`dailyPool`, 38,888,889) and `seasonStart`. While `seasonStart` is null, Season 1 starts on the day the genesis ledger transaction is posted; deploying is refused until then with a clear message.
 
 ## 5. Scheduled jobs
 
@@ -99,4 +103,4 @@ Run only one scheduler. If you change the payout weekday in the economy config (
 
 ## 7. Before announcing
 
-Work through blueprint §12.2. The key items: Zord shows the treasury holding 10,000,000,000 ZGEMS; three test passes are sent and the moved one stops mining; payouts are tested end-to-end on testnet plus three small mainnet payouts; the external security review is done; and maintenance mode takes effect in under 5 s.
+Work through blueprint §12.2. The key items: Zord shows the treasury holding 10,000,000,000 VALLEY; three test passes are sent and the moved one stops mining; payouts are tested end-to-end on testnet plus three small mainnet payouts; the external security review is done; and maintenance mode takes effect in under 5 s.

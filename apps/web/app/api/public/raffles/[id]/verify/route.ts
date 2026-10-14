@@ -1,4 +1,4 @@
-import { GameError, raffleVerification } from "@zecminers/db";
+import { GameError, raffleVerification } from "@hoodvalley/db";
 import { route } from "@/lib/api";
 
 /** Seed, block hash, ticket ranges and winners — everything needed to recompute the draw. */

@@ -13,7 +13,7 @@ export function parseAmount(value: string | number | bigint): bigint {
   return BigInt(value);
 }
 
-export function formatZgems(value: bigint | string | number): string {
+export function formatValley(value: bigint | string | number): string {
   const v = typeof value === "bigint" ? value : parseAmount(value);
   const negative = v < 0n;
   const digits = (negative ? -v : v).toString();

@@ -1,4 +1,4 @@
-import { DEV_ECONOMY_PARAMS, parseEconomyParams, type EconomyParams, type FreezeWindow } from "@zecminers/economy";
+import { DEV_ECONOMY_PARAMS, parseEconomyParams, type EconomyParams, type FreezeWindow } from "@hoodvalley/economy";
 import { desc, eq, lte } from "drizzle-orm";
 import type { DbOrTx } from "./client";
 import { adminAuditLog, alerts, chainRegistry, economyConfig, systemFlags } from "./schema";
@@ -137,7 +137,7 @@ export async function recordAlert(db: DbOrTx, level: AlertLevel, kind: string, m
 }
 
 async function pushAlert(level: AlertLevel, kind: string, message: string) {
-  const text = `[ZecMiners ${level.toUpperCase()}] ${kind}: ${message}`;
+  const text = `[Hood Valley ${level.toUpperCase()}] ${kind}: ${message}`;
   const tasks: Promise<unknown>[] = [];
   const discord = process.env.ALERT_DISCORD_WEBHOOK_URL;
   if (discord) {

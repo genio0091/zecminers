@@ -1,5 +1,5 @@
-import { TOTAL_SUPPLY, TICKER } from "@zecminers/economy";
-import type { ChainIndexer } from "@zecminers/zord-client";
+import { POOL_ALLOCATION, TOTAL_SUPPLY, TICKER } from "@hoodvalley/economy";
+import type { ChainIndexer } from "@hoodvalley/zord-client";
 import { desc, eq, inArray, ne, sql } from "drizzle-orm";
 import type { DbOrTx } from "./client";
 import { ledgerAccounts, ledgerEntries, payoutItems, porSnapshots, type InvariantResult } from "./schema";
@@ -182,6 +182,6 @@ export async function poolBalances(db: DbOrTx) {
   const rows = await db
     .select({ code: ledgerAccounts.code, balance: ledgerAccounts.balance })
     .from(ledgerAccounts)
-    .where(inArray(ledgerAccounts.code, ["pool_mining", "pool_daily", "pool_marketing", "pool_liquidity", "sink_burned", "payout_pending"]));
+    .where(inArray(ledgerAccounts.code, [...Object.keys(POOL_ALLOCATION), "pool_daily", "pool_marketing", "sink_burned", "payout_pending"]));
   return Object.fromEntries(rows.map((r) => [r.code, BigInt(r.balance)])) as Record<string, bigint>;
 }

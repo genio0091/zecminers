@@ -1,7 +1,7 @@
 /**
  * Create team/test logins (t1 address + claim code) and write them to a CSV.
  *
- *   DATABASE_URL=… CLAIM_CODE_PEPPER=… pnpm --filter @zecminers/db team-logins -- --count 100 --out ~/team-logins.csv
+ *   DATABASE_URL=… CLAIM_CODE_PEPPER=… pnpm --filter @hoodvalley/db team-logins -- --count 100 --out ~/team-logins.csv
  *
  * CLAIM_CODE_PEPPER must be the same value the website uses, or the codes won't work there.
  * Test passes can sign in and play but are never paid out. Keep the CSV private.

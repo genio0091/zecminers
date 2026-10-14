@@ -1,4 +1,4 @@
-import { importPasses } from "@zecminers/db";
+import { importPasses } from "@hoodvalley/db";
 import { z } from "zod";
 import { requireUser, route } from "@/lib/api";
 import { serverEnv } from "@/lib/env";

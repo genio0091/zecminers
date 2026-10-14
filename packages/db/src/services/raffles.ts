@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { drawWinners, seedCommitment, ticketOwner } from "@zecminers/economy";
+import { drawWinners, seedCommitment, ticketOwner } from "@hoodvalley/economy";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import type { Database, DbOrTx } from "../client";
 import { GameError } from "../errors";
@@ -63,7 +63,7 @@ export async function closeDueRaffles(db: DbOrTx, tipHeight: number) {
 
 /**
  * Reveal phase: after block H exists, compute winners from HMAC_SHA256(seed, blockhash_H ‖ id),
- * pay prizes from the marketing pool and publish the seed.
+ * pay prizes from the community pool (8%) and publish the seed.
  */
 export async function drawRaffle(
   db: Database,
@@ -101,7 +101,7 @@ export async function drawRaffle(
             actor: p.adminId,
             memo: `raffle #${raffle.id} winner ${k + 1}`,
             entries: [
-              { account: "pool_marketing", amount: -prizeEach },
+              { account: "pool_community", amount: -prizeEach },
               { account: userAccountCode(owner.userId), amount: prizeEach },
             ],
           });

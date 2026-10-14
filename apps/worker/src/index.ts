@@ -1,13 +1,13 @@
 /**
- * ZecMiners worker (blueprint §5.1): pg-boss queues in Postgres drive every scheduled job.
+ * Hood Valley worker: pg-boss queues in Postgres drive every scheduled job.
  * On Vercel the same job functions run from /api/cron/[job] instead — pick one, not both.
  *
- *   pnpm --filter @zecminers/worker start          # long-running worker
- *   pnpm --filter @zecminers/worker once invariants # run one job and exit
+ *   pnpm --filter @hoodvalley/worker start          # long-running worker
+ *   pnpm --filter @hoodvalley/worker once invariants # run one job and exit
  */
 import { PgBoss } from "pg-boss";
-import { createDb, DbMockIndexer, JOBS, type JobContext, type JobName } from "@zecminers/db";
-import { indexerFromEnv, zebraFromEnv } from "@zecminers/zord-client";
+import { createDb, DbMockIndexer, JOBS, type JobContext, type JobName } from "@hoodvalley/db";
+import { indexerFromEnv, zebraFromEnv } from "@hoodvalley/zord-client";
 
 const url = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
 if (!url) {

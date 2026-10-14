@@ -1,18 +1,26 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, Pixelify_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const pixelify = Pixelify_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-pixelify",
+/* The three faces from the Hood Valley design files, self-hosted (latin subsets). */
+const geologica = localFont({
+  src: "./fonts/geologica-latin.woff2",
+  weight: "300 800",
+  variable: "--font-geologica",
   display: "swap",
 });
 
-const plex = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-plex",
+const jersey = localFont({
+  src: "./fonts/jersey10-latin.woff2",
+  weight: "400",
+  variable: "--font-jersey",
+  display: "swap",
+});
+
+const jetbrains = localFont({
+  src: "./fonts/jetbrains-mono-latin.woff2",
+  weight: "100 800",
+  variable: "--font-jetbrains",
   display: "swap",
 });
 
@@ -21,29 +29,29 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.AUTH_URL ?? "htt
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "ZecMiners — mine $ZGEMS in the browser, paid weekly on Zcash",
-    template: "%s · ZecMiners",
+    default: "Hood Valley — Mine the Frontier",
+    template: "%s · Hood Valley",
   },
   description:
-    "ZecMiners is a pixel mining game. Soulbound Whitelist Pass holders mine $ZGEMS, a ZRC-20 token on Zcash mainnet, and the balance is paid to their wallet every week. No liquidity pool at launch. Official trading starts after the NFT mint.",
+    "Hood Valley is an on-chain mining game on Robinhood Chain. 3,333 Valley Miners clock into one 12-hour shift a day and split a daily pool of $VALLEY from the 7,000,000,000 Season 1 mining pool.",
   openGraph: {
     type: "website",
-    siteName: "ZecMiners",
-    images: [{ url: "/media/posters/mine-loop.jpg", width: 720, height: 720 }],
+    siteName: "Hood Valley",
+    images: [{ url: "/media/posters/valley-map.webp", width: 960, height: 960 }],
   },
   twitter: { card: "summary_large_image" },
   icons: { icon: "/icon.svg" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0e0b08",
+  themeColor: "#1a1208",
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${pixelify.variable} ${plex.variable}`}>
+    <html lang="en" className={`${geologica.variable} ${jersey.variable} ${jetbrains.variable}`}>
       <body className="min-h-screen overflow-x-hidden">{children}</body>
     </html>
   );

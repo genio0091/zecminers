@@ -1,4 +1,4 @@
-import { createRaffle, currentTipHeight } from "@zecminers/db";
+import { createRaffle, currentTipHeight } from "@hoodvalley/db";
 import { z } from "zod";
 import { requireUser, route } from "@/lib/api";
 import { chain } from "@/lib/chain";

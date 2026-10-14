@@ -1,4 +1,4 @@
-import { getMaintenance } from "@zecminers/db";
+import { getMaintenance } from "@hoodvalley/db";
 import { sql } from "drizzle-orm";
 import { route } from "@/lib/api";
 

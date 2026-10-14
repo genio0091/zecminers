@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
-import { getDb, tables } from "@zecminers/db";
+import { getDb, tables } from "@hoodvalley/db";
 import { auth } from "@/auth";
 import { AdminApp } from "@/components/admin/admin-app";
 import { serverEnv } from "@/lib/env";

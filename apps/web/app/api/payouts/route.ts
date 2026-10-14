@@ -1,4 +1,4 @@
-import { getRegistry, payoutHistory } from "@zecminers/db";
+import { getRegistry, payoutHistory } from "@hoodvalley/db";
 import { requireUser, route } from "@/lib/api";
 
 export const GET = route({ access: "user" }, async (ctx) => {

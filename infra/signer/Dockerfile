@@ -8,7 +8,7 @@ RUN cargo build --release
 
 FROM debian:bookworm-slim
 RUN useradd --system --uid 10001 signer
-COPY --from=build /src/target/release/zecminers-signer /usr/local/bin/zecminers-signer
+COPY --from=build /src/target/release/hood-valley-signer /usr/local/bin/hood-valley-signer
 USER signer
 ENV SIGNER_MODE=dry-run
-ENTRYPOINT ["zecminers-signer"]
+ENTRYPOINT ["hood-valley-signer"]

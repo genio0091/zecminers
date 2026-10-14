@@ -1,24 +1,24 @@
 # Phase 0: genesis runbook (blueprint §6)
 
-Phase 0 deploys **$ZGEMS**, mints the whole supply in **one** mint, and deploys the **Whitelist Pass** collection (ZRC-721), all from the treasury address. It is done quietly in a single session, verified in Zord, and only then announced. None of this runs on a server: the treasury seed lives on a dedicated, clean device only (§11.1).
+Phase 0 deploys **$VALLEY**, mints the whole supply in **one** mint, and deploys the **Valley Miner pass** collection (ZRC-721), all from the treasury address. It is done quietly in a single session, verified in Zord, and only then announced. None of this runs on a server: the treasury seed lives on a dedicated, clean device only (§11.1).
 
 ## Before the session
 
 - [ ] The 7 verifications in §3.3 are done against the `zatoshilabs/zord` source: carrier byte limit, whether a 5-letter ticker is accepted, deploy + mint in the same block, Zebra compatibility, NU7 support, reorg handling, testnet.
-- [ ] `ZGEMS` is still unused on Zord, Zatoshi Market and Zecscriptions, and a checked backup ticker is ready.
+- [ ] `VALLEY` is still unused on Zord, Zatoshi Market and Zecscriptions, the indexer accepts a 6-character tick, and a checked backup ticker is ready (set `token_tick` in the registry and `TOKEN_TICK` for the signer if it changes).
 - [ ] Pass collection name (e.g. `ZMPASS`), supply, and metadata + images on IPFS (`<id>.json`).
 - [ ] A dedicated treasury laptop with Zatoshi Wallet and a fresh wallet. The seed is backed up offline in 2 places, and a restore has been tested once.
 - [ ] About 0.01 ZEC is on the treasury address for genesis fees, sent from the owner's shielded wallet.
 - [ ] A full dress rehearsal on testnet (or mainnet with a random ticker and a tiny supply).
-- [ ] The session is **outside the NU7 freeze window**: no $ZGEMS transactions from 48 h before to 48 h after activation (target 5 Nov 2026). Finish genesis before 1 Nov 2026.
+- [ ] The session is **outside the NU7 freeze window**: no $VALLEY transactions from 48 h before to 48 h after activation (target 5 Nov 2026). Finish genesis before 1 Nov 2026.
 
 ## Payloads (minified, byte sizes computed by `packages/zcash`)
 
 | Operation | Payload | Bytes |
 |---|---|---|
-| deploy | `{"p":"zrc-20","op":"deploy","tick":"ZGEMS","max":"10000000000","lim":"10000000000"}` | 83 (over the 80-byte OP_RETURN standard, so check the carrier) |
-| deploy (no `lim`) | `{"p":"zrc-20","op":"deploy","tick":"ZGEMS","max":"10000000000"}` | 63 (only if Zord treats a missing `lim` as `max`) |
-| mint | `{"p":"zrc-20","op":"mint","tick":"ZGEMS","amt":"10000000000"}` | 61 |
+| deploy | `{"p":"zrc-20","op":"deploy","tick":"VALLEY","max":"10000000000","lim":"10000000000"}` | 84 (over the 80-byte OP_RETURN standard, so check the carrier) |
+| deploy (no `lim`) | `{"p":"zrc-20","op":"deploy","tick":"VALLEY","max":"10000000000"}` | 64 (only if Zord treats a missing `lim` as `max`) |
+| mint | `{"p":"zrc-20","op":"mint","tick":"VALLEY","amt":"10000000000"}` | 62 |
 | pass collection | `{"p":"zrc-721","op":"deploy","collection":"ZMPASS","supply":"<n>","meta":"<CID>"}` | > 80 with a CID |
 | pass mint | `{"p":"zrc-721","op":"mint","collection":"ZMPASS","id":"0"}` | 58 |
 
@@ -29,7 +29,7 @@ Phase 0 deploys **$ZGEMS**, mints the whole supply in **one** mint, and deploys 
 1. Pick a quiet hour. Announce nothing.
 2. Broadcast the **deploy** inscription.
 3. Immediately broadcast the **mint**: in the same block if Zord allows it, otherwise right after 1 confirmation.
-4. Watch the mempool and Zord for ZGEMS mints from other addresses.
+4. Watch the mempool and Zord for VALLEY mints from other addresses.
 5. If someone minted first, **stop**. The ticker is lost; repeat the whole session with the backup ticker.
 6. Deploy the pass collection in the same session.
 
@@ -37,10 +37,10 @@ Phase 0 deploys **$ZGEMS**, mints the whole supply in **one** mint, and deploys 
 
 | Check | Expected |
 |---|---|
-| Zord `/api/v1/tokens` | tick ZGEMS, max 10,000,000,000 |
+| Zord `/api/v1/tokens` | tick VALLEY, max 10,000,000,000 |
 | total minted | 10,000,000,000 (100%) |
 | holders | exactly 1: the treasury, 10,000,000,000 |
-| canonical deploy | ours is the first valid deploy of ZGEMS (also on another explorer) |
+| canonical deploy | ours is the first valid deploy of VALLEY (also on another explorer) |
 
 ## Record and publish
 

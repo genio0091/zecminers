@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
-import { inFreezeWindow, isoWeek, planPayoutBatch, type FreezeWindow } from "@zecminers/economy";
-import { estimatePayoutFeeZats, isFinal, payloadBytes, zrc20Transfer } from "@zecminers/zcash";
-import type { ChainIndexer } from "@zecminers/zord-client";
+import { inFreezeWindow, isoWeek, planPayoutBatch, TICKER, type FreezeWindow } from "@hoodvalley/economy";
+import { estimatePayoutFeeZats, isFinal, payloadBytes, zrc20Transfer } from "@hoodvalley/zcash";
+import type { ChainIndexer } from "@hoodvalley/zord-client";
 import { and, asc, desc, eq, gt, inArray, isNotNull, sql } from "drizzle-orm";
 import type { Database, DbOrTx } from "../client";
 import { GameError } from "../errors";
@@ -66,7 +66,7 @@ export async function createWeeklyBatch(
     else if (!snapshot.invariantsOk) holdReasons.push("latest reserve check failed");
     if ((await getMaintenance(tx)).on) holdReasons.push("maintenance mode is on");
 
-    const perItemFee = estimatePayoutFeeZats(payloadBytes(zrc20Transfer("ZGEMS", "1000000000")));
+    const perItemFee = estimatePayoutFeeZats(payloadBytes(zrc20Transfer(TICKER, "1000000000")));
     const [batch] = await tx
       .insert(payoutBatches)
       .values({

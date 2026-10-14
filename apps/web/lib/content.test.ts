@@ -1,15 +1,14 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { POOL_ALLOCATION, SEASON_1_DAILY_POOL, TOTAL_SUPPLY } from "@hoodvalley/economy";
 import { describe, expect, it } from "vitest";
-import { FAQ, TRADING_LINE } from "./content";
+import { ALLOCATION, FAQ } from "./content";
 
 /**
- * Blueprint §4.5: the approved wording is exactly
- *   "No liquidity pool at launch. Official trading starts after the NFT mint."
- * and the site must never claim the token can't be traded (AI tools check this against
- * the marketplaces).
+ * The public site must match the litepaper: a fixed 10B supply split 70/15/8/5/2, and no
+ * claim that $VALLEY can't move (it is a normal transferable token once it is in a wallet).
  */
-const FORBIDDEN = [/can(?:no|')t be traded/i, /cannot be traded/i, /not tradable/i, /untradable/i, /\bno trading\b/i, /tidak bisa di-?trade/i];
+const FORBIDDEN = [/can(?:no|')t be traded/i, /cannot be traded/i, /not tradable/i, /untradable/i, /guaranteed (?:return|profit|yield)/i];
 // (this file is excluded from the scan because it lists the phrases)
 
 function files(dir: string): string[] {
@@ -21,12 +20,18 @@ function files(dir: string): string[] {
 }
 
 describe("public wording", () => {
-  it("uses the approved trading line", () => {
-    expect(TRADING_LINE).toBe("No liquidity pool at launch. Official trading starts after the NFT mint.");
-    expect(FAQ.find((f) => f.q === "Can $ZGEMS be traded?")?.a.startsWith(TRADING_LINE)).toBe(true);
+  it("keeps the 70/15/8/5/2 allocation from the litepaper and the ledger", () => {
+    expect(ALLOCATION.map((a) => a.share)).toEqual([70, 15, 8, 5, 2]);
+    expect(ALLOCATION.reduce((sum, a) => sum + a.amount, 0)).toBe(Number(TOTAL_SUPPLY));
+    for (const a of ALLOCATION) expect(BigInt(a.amount)).toBe(POOL_ALLOCATION[a.code]);
   });
 
-  it("never says the token can't be traded", () => {
+  it("quotes the same daily pool as the economy", () => {
+    const daily = SEASON_1_DAILY_POOL.toLocaleString("en-US");
+    expect(FAQ.find((f) => f.q === "How much $VALLEY is mined each day?")?.a).toContain(daily);
+  });
+
+  it("never claims the token can't be traded or promises returns", () => {
     const root = new URL("..", import.meta.url).pathname;
     for (const file of [...files(join(root, "app")), ...files(join(root, "components")), ...files(join(root, "lib"))]) {
       const text = readFileSync(file, "utf8");
@@ -34,8 +39,11 @@ describe("public wording", () => {
     }
   });
 
-  it("keeps the 80/10/5/5 allocation from the blueprint", async () => {
-    const { ALLOCATION } = await import("./content");
-    expect(ALLOCATION.map((a) => a.pct)).toEqual([80, 10, 5, 5]);
+  it("no longer mentions the old brand", () => {
+    const root = new URL("..", import.meta.url).pathname;
+    for (const file of [...files(join(root, "app")), ...files(join(root, "components")), ...files(join(root, "lib"))]) {
+      const text = readFileSync(file, "utf8");
+      expect(/ZecMiners|\$ZGEMS/.test(text), `${file} still says ZecMiners/$ZGEMS`).toBe(false);
+    }
   });
 });

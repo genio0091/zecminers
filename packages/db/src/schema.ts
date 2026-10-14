@@ -16,9 +16,9 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-import type { EconomyParams, OreId } from "@zecminers/economy";
+import type { EconomyParams } from "@hoodvalley/economy";
 
-/** Tables follow blueprint §8.1. Amounts are BIGINT, surfaced as `bigint` in TypeScript. */
+/** Hood Valley tables. Amounts are BIGINT $VALLEY, surfaced as `bigint` in TypeScript. */
 const ts = (name: string) => timestamp(name, { withTimezone: true, mode: "date" });
 const amount = (name: string) => bigint(name, { mode: "bigint" });
 
@@ -28,9 +28,13 @@ export type PassStatus = "unclaimed" | "active" | "moved" | "deactivated";
 export type SlotState = "idle" | "mining" | "broken";
 export type AccountType =
   | "pool_mining"
+  | "pool_liquidity"
+  | "pool_community"
+  | "pool_presale_lp"
+  | "pool_team"
+  /** Pre-Hood Valley pools: emptied into the new split at genesis or by `reallocateLegacyPools`. */
   | "pool_daily"
   | "pool_marketing"
-  | "pool_liquidity"
   | "user"
   | "sink_burned"
   | "payout_pending"
@@ -95,8 +99,9 @@ export const slots = pgTable(
       .unique()
       .references(() => passes.id),
     name: text("name").notNull().default("Zandy"),
+    /** Unused since the shift model (kept for history): trait power now comes from the Miner. */
     level: integer("level").notNull().default(1),
-    durability: integer("durability").notNull(),
+    durability: integer("durability").notNull().default(0),
     state: text("state").$type<SlotState>().notNull().default("idle"),
     brokenUntil: ts("broken_until"),
     createdAt: ts("created_at").notNull().defaultNow(),
@@ -116,17 +121,36 @@ export const miningSessions = pgTable(
     slotId: uuid("slot_id")
       .notNull()
       .references(() => slots.id),
+    /** Shift day the Miner was deployed into. */
     day: date("day", { mode: "string" }).notNull(),
+    /** Deployed at. */
     startedAt: ts("started_at").notNull(),
+    /** The window close: extraction stops here. */
     endsAt: ts("ends_at").notNull(),
+    /** Claimed at. */
     collectedAt: ts("collected_at"),
     configVersion: integer("config_version").notNull(),
-    level: integer("level").notNull(),
+    level: integer("level").notNull().default(1),
+    /** Trait power at deploy, 10_000 = 1.00×. */
+    powerBp: integer("power_bp").notNull().default(10_000),
+    /** Claim weight: power × share of the window worked. */
+    weightBp: integer("weight_bp").notNull().default(0),
+    /** The claimed share. */
     reward: amount("reward"),
-    oreDrops: jsonb("ore_drops").$type<Record<OreId, number>>(),
+    oreDrops: jsonb("ore_drops").$type<Record<string, number>>(),
+    /** Geared up after claiming; the Miner can take the next shift. */
+    gearedAt: ts("geared_at"),
   },
   (t) => [unique("mining_sessions_slot_day").on(t.slotId, t.day), index("mining_sessions_day_idx").on(t.day)],
 );
+
+/** One row per shift that had Miners on it: the pool is fixed when the first Miner deploys. */
+export const shiftDays = pgTable("shift_days", {
+  day: date("day", { mode: "string" }).primaryKey(),
+  pool: amount("pool").notNull(),
+  configVersion: integer("config_version").notNull(),
+  createdAt: ts("created_at").notNull().defaultNow(),
+});
 
 export const economyConfig = pgTable("economy_config", {
   version: serial("version").primaryKey(),
@@ -137,6 +161,7 @@ export const economyConfig = pgTable("economy_config", {
   createdAt: ts("created_at").notNull().defaultNow(),
 });
 
+/** Streak log: one row per shift day the player geared up, with the streak bonus paid. */
 export const dailyClaims = pgTable(
   "daily_claims",
   {
@@ -157,7 +182,7 @@ export const inventory = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id),
-    item: text("item").$type<OreId>().notNull(),
+    item: text("item").notNull(),
     qty: integer("qty").notNull().default(0),
   },
   (t) => [primaryKey({ columns: [t.userId, t.item] }), check("inventory_qty_nonneg", sql`${t.qty} >= 0`)],
@@ -170,7 +195,7 @@ export const inventoryMovements = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id),
-    item: text("item").$type<OreId>().notNull(),
+    item: text("item").notNull(),
     delta: integer("delta").notNull(),
     reason: text("reason").notNull(),
     idempotencyKey: text("idempotency_key").notNull().unique(),

@@ -10,10 +10,11 @@ const INVARIANT_LABEL: Record<string, string> = {
 };
 
 const POOL_COLOR: Record<string, string> = {
-  pool_mining: "bg-gold",
-  pool_daily: "bg-gold-hi",
-  pool_marketing: "bg-ember",
-  pool_liquidity: "bg-moss",
+  pool_mining: "bg-alloc-mining",
+  pool_liquidity: "bg-alloc-liquidity",
+  pool_community: "bg-alloc-community",
+  pool_presale_lp: "bg-alloc-presale",
+  pool_team: "bg-alloc-team",
 };
 
 function ago(iso: string | null | undefined): string {
@@ -26,7 +27,7 @@ function ago(iso: string | null | undefined): string {
 }
 
 function explorerLink(base: string | undefined, kind: "tx" | "address" | "inscription", id: string | undefined) {
-  if (!id) return <span className="text-stone">Published when Phase 0 is confirmed on-chain</span>;
+  if (!id) return <span className="text-stone">Published when genesis is confirmed on-chain</span>;
   if (!base) return <span className="break-all">{id}</span>;
   return (
     <a href={`${base.replace(/\/$/, "")}/${kind}/${id}`} target="_blank" rel="noreferrer" className="break-all">
@@ -59,7 +60,7 @@ export function ReservesView({ data }: { data: PublicReserves }) {
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-5">
         <Panel className="p-5">
-          <div className="mb-3.5 font-pixel text-2xl">Reserve checks</div>
+          <div className="mb-3.5 font-pixel text-[32px] leading-none">RESERVE CHECKS</div>
           <div className="grid gap-2.5">
             {(inv.length ? inv : Object.keys(INVARIANT_LABEL).map((name) => ({ name, ok: null, detail: "Runs once genesis is recorded" }))).map((i) => (
               <Well key={i.name} className="flex items-start gap-3 p-3">
@@ -84,7 +85,7 @@ export function ReservesView({ data }: { data: PublicReserves }) {
         </Panel>
 
         <Panel tone="coal-2" className="p-5">
-          <div className="mb-3.5 font-pixel text-2xl">Ledger pools</div>
+          <div className="mb-3.5 font-pixel text-[32px] leading-none">LEDGER POOLS</div>
           <div className="grid gap-2.5 text-[13px]">
             {data.pools.map((p) => {
               const pct = Number((BigInt(p.left) * 1000n) / (BigInt(p.ceiling) || 1n)) / 10;
@@ -93,7 +94,7 @@ export function ReservesView({ data }: { data: PublicReserves }) {
                   <div className="mb-1.5 flex justify-between gap-3">
                     <span className="text-dust">{p.label}</span>
                     <span className="text-gold-hi">
-                      {fmt(p.left)} {p.code === "pool_liquidity" ? "locked" : "left"}
+                      {fmt(p.left)} left
                     </span>
                   </div>
                   <Bar pct={pct} color={POOL_COLOR[p.code]} className="h-3" />
@@ -110,13 +111,13 @@ export function ReservesView({ data }: { data: PublicReserves }) {
             </div>
           </div>
           <FinePrint className="mt-3.5">
-            Pool ceilings are set once at genesis. Nothing can be topped up, and the liquidity pool stays locked until official trading.
+            Pool ceilings are set once at genesis (70/15/8/5/2 of a fixed 10B supply). Nothing can be topped up.
           </FinePrint>
         </Panel>
       </div>
 
       <Panel className="p-5">
-        <div className="mb-3 font-pixel text-2xl">Genesis registry</div>
+        <div className="mb-3 font-pixel text-[32px] leading-none">GENESIS REGISTRY</div>
         <div className="grid gap-2.5 text-[12.5px]">
           {(
             [
@@ -125,7 +126,7 @@ export function ReservesView({ data }: { data: PublicReserves }) {
               ["Token inscription", explorerLink(reg.explorer_base_url, "inscription", reg.token_inscription_id)],
               ["Treasury address", explorerLink(reg.explorer_base_url, "address", reg.treasury_address)],
               ["Hot wallet (payout tranches)", explorerLink(reg.explorer_base_url, "address", reg.hot_wallet_address)],
-              ["Whitelist Pass collection", explorerLink(reg.explorer_base_url, "inscription", reg.pass_collection_inscription_id ?? reg.pass_collection)],
+              ["Valley Miner pass collection", explorerLink(reg.explorer_base_url, "inscription", reg.pass_collection_inscription_id ?? reg.pass_collection)],
             ] as const
           ).map(([label, value]) => (
             <Well key={label} className="p-3">

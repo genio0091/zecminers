@@ -1,5 +1,5 @@
 import "server-only";
-import type { ZcashNetwork } from "@zecminers/zcash";
+import type { ZcashNetwork } from "@hoodvalley/zcash";
 
 const isProd = process.env.NODE_ENV === "production";
 

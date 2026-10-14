@@ -2,22 +2,25 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type ApiResult } from "@/lib/client-api";
-import type { InventoryItem, Me, Notice, Slot } from "./types";
+import type { Me, Notice, Shift } from "./types";
 
 const ERROR_TEXT: Record<string, string> = {
-  MAINTENANCE: "ZecMiners is in maintenance. Your balance is safe; actions are paused.",
+  MAINTENANCE: "Valley HQ is in maintenance. Your balance is safe; actions are paused.",
   RATE_LIMITED: "Too many requests. Wait a moment and try again.",
   UNAUTHORIZED: "Your session expired. Sign in again.",
 };
 
+export function errorText(code: string, message: string) {
+  return ERROR_TEXT[code] ?? message;
+}
+
 /**
- * All server state for the game screen. The server is authoritative: after every action we
- * re-read slots, balance and inventory instead of guessing locally.
+ * All server state for Valley HQ. The server is authoritative: after every action we re-read
+ * the shift, the Miners and the balance instead of guessing locally.
  */
 export function useGame() {
   const [me, setMe] = useState<Me | null>(null);
-  const [slots, setSlots] = useState<Slot[]>([]);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [shift, setShift] = useState<Shift | null>(null);
   const [offsetMs, setOffsetMs] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState("");
@@ -30,15 +33,14 @@ export function useGame() {
   }, []);
 
   const refresh = useCallback(async () => {
-    const [m, s, inv] = await Promise.all([api<Me>("/api/me"), api<Slot[]>("/api/slots"), api<InventoryItem[]>("/api/inventory")]);
+    const [m, s] = await Promise.all([api<Me>("/api/me"), api<Shift>("/api/shift")]);
     if (!mounted.current) return;
     if (m.ok) {
       setMe(m.data);
       syncClock(m.serverTime);
       setLoadError("");
-    } else setLoadError(ERROR_TEXT[m.error.code] ?? m.error.message);
-    if (s.ok) setSlots(s.data);
-    if (inv.ok) setInventory(inv.data);
+    } else setLoadError(errorText(m.error.code, m.error.message));
+    if (s.ok) setShift(s.data);
     setLoaded(true);
   }, [syncClock]);
 
@@ -67,7 +69,7 @@ export function useGame() {
         const msg = onOk?.(res.data);
         if (msg) setNotice({ kind: "good", text: msg });
       } else {
-        setNotice({ kind: "bad", text: ERROR_TEXT[res.error.code] ?? res.error.message });
+        setNotice({ kind: "bad", text: errorText(res.error.code, res.error.message) });
       }
       await refresh();
       return res;
@@ -75,5 +77,7 @@ export function useGame() {
     [refresh, syncClock],
   );
 
-  return { me, slots, inventory, offsetMs, loaded, loadError, notice, setNotice, busy, act, refresh };
+  return { me, shift, offsetMs, loaded, loadError, notice, setNotice, busy, act, refresh };
 }
+
+export type Game = ReturnType<typeof useGame>;

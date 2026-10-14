@@ -1,4 +1,4 @@
-import { audit, createWeeklyBatch, getFreezeWindows } from "@zecminers/db";
+import { audit, createWeeklyBatch, getFreezeWindows } from "@hoodvalley/db";
 import { z } from "zod";
 import { requireUser, route } from "@/lib/api";
 

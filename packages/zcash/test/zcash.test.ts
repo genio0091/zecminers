@@ -55,13 +55,13 @@ describe("ZIP 317", () => {
 });
 
 describe("genesis payloads", () => {
-  it("match the byte sizes in the blueprint", () => {
+  it("have the expected byte sizes for the VALLEY tick", () => {
     const g = genesisPayloads();
-    expect(g.deploy.payload).toBe('{"p":"zrc-20","op":"deploy","tick":"ZGEMS","max":"10000000000","lim":"10000000000"}');
-    expect(g.deploy.bytes).toBe(83);
+    expect(g.deploy.payload).toBe('{"p":"zrc-20","op":"deploy","tick":"VALLEY","max":"10000000000","lim":"10000000000"}');
+    expect(g.deploy.bytes).toBe(84);
     expect(g.deploy.exceedsOpReturnStandard).toBe(true);
-    expect(g.deployWithoutLim.bytes).toBe(63);
-    expect(g.mint.bytes).toBe(61);
+    expect(g.deployWithoutLim.bytes).toBe(64);
+    expect(g.mint.bytes).toBe(62);
     expect(zrc721Mint("ZMPASS", "0")).toBe('{"p":"zrc-721","op":"mint","collection":"ZMPASS","id":"0"}');
   });
 });

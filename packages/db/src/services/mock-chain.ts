@@ -1,5 +1,5 @@
-import { TOTAL_SUPPLY } from "@zecminers/economy";
-import type { ChainIndexer, IndexerStatus, InscriptionInfo, TokenInfo } from "@zecminers/zord-client";
+import { TOTAL_SUPPLY } from "@hoodvalley/economy";
+import type { ChainIndexer, IndexerStatus, InscriptionInfo, TokenInfo } from "@hoodvalley/zord-client";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import type { DbOrTx } from "../client";
 import { passes, payoutItems } from "../schema";

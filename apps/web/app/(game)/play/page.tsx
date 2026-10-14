@@ -4,7 +4,7 @@ import { GameApp } from "@/components/game/game-app";
 import { SignIn } from "@/components/game/sign-in";
 import { discordEnabled, serverEnv } from "@/lib/env";
 
-export const metadata: Metadata = { title: "Play", robots: { index: false } };
+export const metadata: Metadata = { title: "Valley HQ", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 export default async function PlayPage({ searchParams }: { searchParams: Promise<{ error?: string; team?: string }> }) {

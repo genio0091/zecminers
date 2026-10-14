@@ -29,14 +29,14 @@ mod tests {
     #[test]
     fn matches_the_typescript_builder() {
         assert_eq!(
-            zrc20_transfer("ZGEMS", 84_120).unwrap(),
-            r#"{"p":"zrc-20","op":"transfer","tick":"ZGEMS","amt":"84120"}"#
+            zrc20_transfer("VALLEY", 84_120).unwrap(),
+            r#"{"p":"zrc-20","op":"transfer","tick":"VALLEY","amt":"84120"}"#
         );
     }
 
     #[test]
     fn rejects_bad_input() {
         assert_eq!(zrc20_transfer("ZG EMS", 1), Err(PayloadError::BadTick));
-        assert_eq!(zrc20_transfer("ZGEMS", 0), Err(PayloadError::BadAmount));
+        assert_eq!(zrc20_transfer("VALLEY", 0), Err(PayloadError::BadAmount));
     }
 }
