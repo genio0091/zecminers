@@ -5,7 +5,7 @@ import { adminAuditLog, alerts, chainRegistry, economyConfig, systemFlags } from
 
 // ---------- system flags ----------
 
-export type FlagKey = "maintenance" | "mining_halted" | "freeze_windows" | "nu7_activation_height";
+export type FlagKey = "maintenance" | "mining_halted" | "freeze_windows" | "nu7_activation_height" | "waitlist_gate";
 
 export interface MaintenanceFlag {
   on: boolean;

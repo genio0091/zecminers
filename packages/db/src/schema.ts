@@ -397,6 +397,35 @@ export const alerts = pgTable(
   (t) => [index("alerts_created_idx").on(t.createdAt)],
 );
 
+/**
+ * The waitlist gate in front of the public site: connect X, the social tasks, a Robinhood Chain
+ * wallet and consent. `unlocked_at` is set once everything is done and opens the full site.
+ */
+export const waitlistEntries = pgTable(
+  "waitlist_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** Set by X OAuth — the only verified identity on the gate. */
+    xId: text("x_id").unique(),
+    xUsername: text("x_username"),
+    xVerifiedAt: ts("x_verified_at"),
+    /** Self-reported handle, used while X OAuth is not configured. */
+    handle: text("handle"),
+    /** Task key → ISO time it was marked (self-attested click-throughs). */
+    tasks: jsonb("tasks").$type<Record<string, string>>().notNull().default({}),
+    /** Robinhood Chain wallet, lower-case. One entry per wallet. */
+    wallet: text("wallet").unique(),
+    consentAt: ts("consent_at"),
+    unlockedAt: ts("unlocked_at"),
+    /** Place in line, assigned at unlock. */
+    memberNo: integer("member_no").unique(),
+    createdAt: ts("created_at").notNull().defaultNow(),
+    updatedAt: ts("updated_at").notNull().defaultNow(),
+  },
+  (t) => [index("waitlist_entries_unlocked_idx").on(t.unlockedAt)],
+);
+
+/** First-version allowlist (handle + address + tasks), kept for its rows. */
 export const waitlist = pgTable("waitlist", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   handle: text("handle").notNull(),

@@ -1,9 +1,12 @@
+import { getDb } from "@hoodvalley/db";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { LazyVideo } from "@/components/lazy-video";
 import { Logo } from "@/components/site/logo";
 import { PendingList } from "@/components/site/landing/roadmap";
 import { ALLOCATION, BENEFITS, SHIFT_STEPS } from "@/lib/content";
+import { siteAccess } from "@/lib/waitlist";
 
 export const metadata: Metadata = {
   title: "Litepaper",
@@ -67,7 +70,12 @@ function Caption({ children }: { children: React.ReactNode }) {
   return <figcaption className="border-t-3 border-night bg-night px-3.5 py-2.5 font-mono text-[11.5px] tracking-[1px] text-cream">{children}</figcaption>;
 }
 
-export default function LitepaperPage() {
+export const dynamic = "force-dynamic";
+
+export default async function LitepaperPage() {
+  // Part of the full site: behind the waitlist gate like the landing page.
+  const { open, entry } = await siteAccess(getDb());
+  if (!open) redirect(entry ? "/waitlist" : "/");
   const section = "grid grid-cols-[minmax(0,1fr)] gap-4";
   const body = "m-0 max-w-[760px]";
   return (

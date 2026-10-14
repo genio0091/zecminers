@@ -284,6 +284,8 @@ export function AdminApp() {
 
         <TestLogins busy={busy} run={run} quick={quick} />
 
+        <WaitlistAdmin busy={busy} run={run} />
+
         <PassesList busy={busy} quick={quick} run={run} />
 
         <div className="grid grid-cols-[repeat(auto-fit,minmax(340px,1fr))] gap-5">
@@ -466,6 +468,126 @@ function TestLogins({ busy, run, quick }: { busy: boolean; run: Run; quick: Quic
           <a download="hood-valley-team-logins.csv" href={`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`}>
             Download CSV ▸
           </a>
+        </div>
+      ) : null}
+    </Section>
+  );
+}
+
+type GateTweet = { id: string; kind: "retweet" | "like" | "quote" | "reply" | "post"; label: string; url: string; text?: string };
+type GateConfig = { xHandle: string; discordInvite: string; tweets: GateTweet[] };
+type WaitlistOverview = {
+  stats: { entries: number; xVerified: number; withWallet: number; unlocked: number };
+  config: GateConfig;
+  defaults: GateConfig;
+  xOAuth: boolean;
+  recent: { handle: string | null; xVerified: boolean; wallet: string | null; tasks: number; memberNo: number | null; updatedAt: string }[];
+};
+
+/** The waitlist gate in front of the public site: numbers, the X tasks, the Discord invite, CSV export. */
+function WaitlistAdmin({ busy, run }: { busy: boolean; run: Run }) {
+  const [data, setData] = useState<WaitlistOverview | null>(null);
+  const [cfg, setCfg] = useState<GateConfig | null>(null);
+  const [reason, setReason] = useState("");
+  const load = useCallback(
+    () =>
+      api<WaitlistOverview>("/api/admin/waitlist").then((r) => {
+        if (!r.ok) return;
+        setData(r.data);
+        setCfg(r.data.config);
+      }),
+    [],
+  );
+  useEffect(() => {
+    load();
+  }, [load, busy]);
+  if (!data || !cfg) return <Section title="Waitlist gate">Loading…</Section>;
+  const setTweet = (i: number, patch: Partial<GateTweet>) => setCfg({ ...cfg, tweets: cfg.tweets.map((t, n) => (n === i ? { ...t, ...patch } : t)) });
+  return (
+    <Section
+      title="Waitlist gate"
+      right={
+        <a href="/api/admin/waitlist/export" className="text-[13px]">
+          Export allowlist CSV ▸
+        </a>
+      }
+    >
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3">
+        <Stat label="Started" value={fmt(data.stats.entries)} />
+        <Stat label="X verified" value={fmt(data.stats.xVerified)} valueClass="text-cream" />
+        <Stat label="Wallets" value={fmt(data.stats.withWallet)} valueClass="text-cream" />
+        <Stat label="Through the gate" value={fmt(data.stats.unlocked)} valueClass="text-moss" />
+      </div>
+      <p className={cx("mb-0 mt-3 text-[13px]", data.xOAuth ? "text-moss" : "text-ember")}>
+        {data.xOAuth
+          ? "X sign-in is on: step 1 is verified by X."
+          : "X sign-in is off: visitors type their handle (marked, not verified). Set AUTH_TWITTER_ID and AUTH_TWITTER_SECRET to turn it on."}
+      </p>
+      <div className="mt-4 grid gap-2 md:grid-cols-2">
+        <label className="grid gap-1 text-[10px] uppercase tracking-[1.5px] text-khaki">
+          Project X handle (Follow task)
+          <input className={input} value={cfg.xHandle} placeholder={data.defaults.xHandle || "HoodValley"} onChange={(e) => setCfg({ ...cfg, xHandle: e.target.value })} />
+        </label>
+        <label className="grid gap-1 text-[10px] uppercase tracking-[1.5px] text-khaki">
+          Discord invite URL (Join task)
+          <input className={input} value={cfg.discordInvite} placeholder="https://discord.gg/…" onChange={(e) => setCfg({ ...cfg, discordInvite: e.target.value })} />
+        </label>
+      </div>
+      <div className="mt-3 grid gap-2">
+        <Label>X tasks (shown in this order; leave a field empty to skip the Follow or Discord task)</Label>
+        {cfg.tweets.map((t, i) => (
+          <Well key={i} className="grid gap-2 p-2.5 md:grid-cols-[110px_120px_1fr_1fr_auto]">
+            <input className={input} value={t.id} aria-label="Task id" onChange={(e) => setTweet(i, { id: e.target.value.toLowerCase() })} />
+            <select className={input} value={t.kind} aria-label="Action" onChange={(e) => setTweet(i, { kind: e.target.value as GateTweet["kind"] })}>
+              {["retweet", "like", "quote", "reply", "post"].map((k) => (
+                <option key={k} value={k}>
+                  {k}
+                </option>
+              ))}
+            </select>
+            <input className={input} value={t.label} aria-label="Label" placeholder="Label" onChange={(e) => setTweet(i, { label: e.target.value })} />
+            <input
+              className={input}
+              value={t.kind === "post" ? (t.text ?? "") : t.url}
+              aria-label={t.kind === "post" ? "Post text" : "Tweet URL"}
+              placeholder={t.kind === "post" ? "Prefilled post text" : "https://x.com/handle/status/…"}
+              onChange={(e) => setTweet(i, t.kind === "post" ? { text: e.target.value } : { url: e.target.value })}
+            />
+            <Button size="sm" variant="ember" onClick={() => setCfg({ ...cfg, tweets: cfg.tweets.filter((_, n) => n !== i) })}>
+              Remove
+            </Button>
+          </Well>
+        ))}
+        <div>
+          <Button
+            size="sm"
+            variant="dark"
+            disabled={cfg.tweets.length >= 8}
+            onClick={() => setCfg({ ...cfg, tweets: [...cfg.tweets, { id: `task-${cfg.tweets.length + 1}`, kind: "retweet", label: "Repost the launch announcement", url: "" }] })}
+          >
+            + Add X task
+          </Button>
+        </div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason" className={cx(input, "min-w-[220px] flex-1")} />
+        <Button disabled={busy || reason.trim().length < 3} onClick={() => run("Save waitlist gate", "/api/admin/waitlist", { config: cfg, reason })}>
+          Save gate
+        </Button>
+      </div>
+      {data.recent.length ? (
+        <div className="mt-4 grid gap-1 text-[12.5px]">
+          <Label>Recent</Label>
+          {data.recent.map((r, i) => (
+            <div key={i} className="flex flex-wrap justify-between gap-3 border-b-3 border-ink py-1">
+              <span>
+                {r.handle ? `@${r.handle}` : "—"} {r.xVerified ? <span className="text-moss">✓</span> : null}
+              </span>
+              <span className="text-stone">
+                {r.tasks} tasks · {r.wallet ? short(r.wallet, 6, 4) : "no wallet"} · {r.memberNo ? `#${r.memberNo}` : "in progress"}
+              </span>
+            </div>
+          ))}
         </div>
       ) : null}
     </Section>
