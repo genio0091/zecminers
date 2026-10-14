@@ -8,6 +8,7 @@ import {
   buyRaffleTickets,
   checkBalanceCache,
   claimMiners,
+  connectX,
   createRaffle,
   createWeeklyBatch,
   deployMiners,
@@ -19,12 +20,18 @@ import {
   importPasses,
   isMiningHalted,
   linkWallet,
+  markWaitlistTask,
   postLedgerTx,
   publishConfig,
   reallocateLegacyPools,
   runReserveChecks,
   setFlag,
+  setWaitlistConsent,
+  setWaitlistWallet,
   settlePayouts,
+  startWithHandle,
+  unlockWaitlistEntry,
+  waitlistStats,
   tables,
   userAccountCode,
   walletSignIn,
@@ -330,6 +337,50 @@ describe.skipIf(!available)("ledger & shift services (real Postgres)", () => {
     expect(real.created[0]!.claimCode).toMatch(/^ZM-[A-Z2-9]{4}-[A-Z2-9]{4}$/);
     const again = await importPasses(h.db, { adminId: "a", lines, reason: "airdrop 1", pepper: PEPPER, network: "mainnet", dryRun: false });
     expect(again.created.length).toBe(0);
+  });
+
+  it("waitlist gate: tasks, a unique wallet and consent unlock the site in line order", async () => {
+    const now = at(15, 9);
+    const required = ["follow", "tweet:launch", "discord"];
+    await expect(startWithHandle(h.db, { entryId: null, handle: "not a handle!", now })).rejects.toMatchObject({ code: "VALIDATION" });
+    const a = await startWithHandle(h.db, { entryId: null, handle: "@valley_fan", now });
+    expect(a.handle).toBe("valley_fan");
+    const unlock = (entryId: string) => unlockWaitlistEntry(h.db, { entryId, requiredTasks: required, requireXVerified: false, now });
+
+    await expect(unlock(a.id)).rejects.toMatchObject({ code: "VALIDATION", message: "Finish every task first." });
+    for (const key of required) await markWaitlistTask(h.db, { entryId: a.id, key, now });
+    await expect(unlock(a.id)).rejects.toMatchObject({ message: "Add your Robinhood Chain wallet first." });
+    await expect(setWaitlistWallet(h.db, { entryId: a.id, wallet: "0x123", now })).rejects.toMatchObject({ code: "INVALID_ADDRESS" });
+    const wallet = "0x000000000000000000000000000000000000DEAD";
+    expect((await setWaitlistWallet(h.db, { entryId: a.id, wallet, now })).wallet).toBe(wallet.toLowerCase());
+    await expect(unlock(a.id)).rejects.toMatchObject({ message: "Tick the consent box to continue." });
+    await setWaitlistConsent(h.db, { entryId: a.id, agreed: true, now });
+    const first = await unlock(a.id);
+    expect(first.unlockedAt).not.toBeNull();
+    expect((await unlock(a.id)).memberNo).toBe(first.memberNo);
+    await expect(setWaitlistWallet(h.db, { entryId: a.id, wallet: "0x000000000000000000000000000000000000beef", now })).rejects.toMatchObject({ code: "CONFLICT" });
+
+    // X login: verified identity, resumes the same entry from another device, wallets stay unique.
+    const b = await connectX(h.db, { entryId: null, xId: "x-42", xUsername: "miner42", now });
+    expect(b.xVerifiedAt).not.toBeNull();
+    expect((await connectX(h.db, { entryId: null, xId: "x-42", xUsername: "miner42_renamed", now })).id).toBe(b.id);
+    await expect(setWaitlistWallet(h.db, { entryId: b.id, wallet, now })).rejects.toMatchObject({ code: "ADDRESS_TAKEN" });
+    await expect(unlockWaitlistEntry(h.db, { entryId: b.id, requiredTasks: [], requireXVerified: true, now })).rejects.toMatchObject({
+      message: "Add your Robinhood Chain wallet first.",
+    });
+    await setWaitlistWallet(h.db, { entryId: b.id, wallet: "0x000000000000000000000000000000000000beef", now });
+    await setWaitlistConsent(h.db, { entryId: b.id, agreed: true, now });
+    const second = await unlockWaitlistEntry(h.db, { entryId: b.id, requiredTasks: [], requireXVerified: true, now });
+    expect(second.memberNo).toBe(first.memberNo! + 1);
+    expect(await waitlistStats(h.db)).toMatchObject({ entries: 2, xVerified: 1, withWallet: 2, unlocked: 2 });
+
+    // A handle-only entry can't pass a gate that requires X sign-in.
+    const c = await startWithHandle(h.db, { entryId: null, handle: "no_x_yet", now });
+    await setWaitlistWallet(h.db, { entryId: c.id, wallet: "0x00000000000000000000000000000000000c0ffe", now });
+    await setWaitlistConsent(h.db, { entryId: c.id, agreed: true, now });
+    await expect(unlockWaitlistEntry(h.db, { entryId: c.id, requiredTasks: [], requireXVerified: true, now })).rejects.toMatchObject({
+      message: "Connect your X account first.",
+    });
   });
 
   it("Season 1 waits for its start date", async () => {

@@ -67,6 +67,8 @@ Set these in Project → Settings → Environment Variables. See `.env.example` 
 
 **Upgrading a ZecMiners deployment to Hood Valley.** Run `pnpm db:migrate` (adds shift weights, gear-up and `shift_days`, and the new pool accounts) and then `pnpm db:seed`. The seed moves an already-posted 80/10/5/5 genesis into the 70/15/8/5/2 pools in one ledger transaction, carrying over whatever the old pools already paid out. Existing passes, claim codes and test logins keep working unchanged.
 
+**Waitlist gate.** `/` and `/litepaper` sit behind the waitlist until a visitor finishes it (Valley HQ players and the team skip it). For verified X sign-in, create an app at developer.x.com: OAuth 2.0, type "Web App", callback `https://<your-domain>/api/waitlist/x/callback` (and the `*.vercel.app` one if you use it), then set `AUTH_TWITTER_ID` and `AUTH_TWITTER_SECRET`. Without them step 1 asks for the X handle instead. The Follow / Repost / Discord tasks come from Admin → Waitlist gate (or `NEXT_PUBLIC_X_HANDLE`, `NEXT_PUBLIC_X_LAUNCH_TWEET`, `NEXT_PUBLIC_DISCORD_URL`), and the same panel exports the allowlist CSV.
+
 **Season 1 clock.** The economy config sets the window (`shiftOpenHourUtc`, `shiftHours`), the daily pool (`dailyPool`, 38,888,889) and `seasonStart`. While `seasonStart` is null, Season 1 starts on the day the genesis ledger transaction is posted; deploying is refused until then with a clear message.
 
 ## 5. Scheduled jobs

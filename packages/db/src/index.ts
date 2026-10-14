@@ -8,6 +8,7 @@ export * from "./services/passes";
 export * from "./services/payouts";
 export * from "./services/raffles";
 export * from "./services/admin";
+export * from "./services/waitlist";
 export * from "./services/jobs";
 export * as tables from "./schema";
 export type * from "./schema";

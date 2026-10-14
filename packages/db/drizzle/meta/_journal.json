@@ -29,6 +29,13 @@
       "when": 1791938967758,
       "tag": "0003_hood_valley",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792018388790,
+      "tag": "0004_waitlist_gate",
+      "breakpoints": true
     }
   ]
 }
