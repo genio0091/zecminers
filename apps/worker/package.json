@@ -14,7 +14,7 @@
   "dependencies": {
     "@hoodvalley/db": "workspace:*",
     "@hoodvalley/zord-client": "workspace:*",
-    "pg-boss": "^12.33.4"
+    "pg-boss": "^12.37.1"
   },
   "devDependencies": {
     "@types/node": "^22.20.4",
