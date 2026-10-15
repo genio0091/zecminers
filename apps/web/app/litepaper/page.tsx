@@ -1,12 +1,8 @@
-import { getDb } from "@hoodvalley/db";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { LazyVideo } from "@/components/lazy-video";
 import { Logo } from "@/components/site/logo";
-import { PendingList } from "@/components/site/landing/roadmap";
-import { ALLOCATION, BENEFITS, SHIFT_STEPS } from "@/lib/content";
-import { siteAccess } from "@/lib/waitlist";
+import { ALLOCATION, BENEFITS, PENDING, SHIFT_STEPS } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "Litepaper",
@@ -70,12 +66,24 @@ function Caption({ children }: { children: React.ReactNode }) {
   return <figcaption className="border-t-3 border-night bg-night px-3.5 py-2.5 font-mono text-[11.5px] tracking-[1px] text-cream">{children}</figcaption>;
 }
 
-export const dynamic = "force-dynamic";
+function PendingList() {
+  return (
+    <ul className="m-0 mt-3 grid list-none gap-2.5 p-0">
+      {PENDING.map((p) => (
+        <li key={p} className="flex flex-wrap items-center justify-between gap-3.5 border-3 border-night bg-cream px-3.5 py-3">
+          <span className="flex items-center gap-3">
+            <span aria-hidden className="box-border block size-[18px] flex-none border-3 border-night" />
+            {p}
+          </span>
+          <span className="font-mono text-[11px] font-bold tracking-[1.5px] text-ink-link">PENDING</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
-export default async function LitepaperPage() {
-  // Part of the full site: behind the waitlist gate like the landing page.
-  const { open, entry } = await siteAccess(getDb());
-  if (!open) redirect(entry ? "/waitlist" : "/");
+/** The litepaper is open to everyone, also before the Claim Office: it is how visitors decide to join. */
+export default function LitepaperPage() {
   const section = "grid grid-cols-[minmax(0,1fr)] gap-4";
   const body = "m-0 max-w-[760px]";
   return (
@@ -345,7 +353,7 @@ export default async function LitepaperPage() {
             <p className={body}>The Hood Valley web platform and dApp interfaces are currently in active development for Robinhood Chain.</p>
             <div className="border-3 border-night bg-gold p-5 shadow-[8px_8px_0_#1A1208]">
               <div className="font-mono text-[11px] font-bold tracking-[2px]">CONFIRMED PRIOR TO PUBLIC RELEASE</div>
-              <PendingList light />
+              <PendingList />
             </div>
           </section>
 

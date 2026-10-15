@@ -8,6 +8,7 @@ import {
   buyRaffleTickets,
   checkBalanceCache,
   claimMiners,
+  connectDiscord,
   connectX,
   createRaffle,
   createWeeklyBatch,
@@ -339,7 +340,7 @@ describe.skipIf(!available)("ledger & shift services (real Postgres)", () => {
     expect(again.created.length).toBe(0);
   });
 
-  it("waitlist gate: tasks, a unique wallet and consent unlock the site in line order", async () => {
+  it("claim office: tasks, Discord and consent file the claim in line order; the wallet comes after", async () => {
     const now = at(15, 9);
     const required = ["follow", "tweet:launch", "discord"];
     await expect(startWithHandle(h.db, { entryId: null, handle: "not a handle!", now })).rejects.toMatchObject({ code: "VALIDATION" });
@@ -349,34 +350,43 @@ describe.skipIf(!available)("ledger & shift services (real Postgres)", () => {
 
     await expect(unlock(a.id)).rejects.toMatchObject({ code: "VALIDATION", message: "Finish every task first." });
     for (const key of required) await markWaitlistTask(h.db, { entryId: a.id, key, now });
-    await expect(unlock(a.id)).rejects.toMatchObject({ message: "Add your Robinhood Chain wallet first." });
-    await expect(setWaitlistWallet(h.db, { entryId: a.id, wallet: "0x123", now })).rejects.toMatchObject({ code: "INVALID_ADDRESS" });
-    const wallet = "0x000000000000000000000000000000000000DEAD";
-    expect((await setWaitlistWallet(h.db, { entryId: a.id, wallet, now })).wallet).toBe(wallet.toLowerCase());
     await expect(unlock(a.id)).rejects.toMatchObject({ message: "Tick the consent box to continue." });
     await setWaitlistConsent(h.db, { entryId: a.id, agreed: true, now });
     const first = await unlock(a.id);
     expect(first.unlockedAt).not.toBeNull();
+    expect(first.wallet).toBeNull();
     expect((await unlock(a.id)).memberNo).toBe(first.memberNo);
-    await expect(setWaitlistWallet(h.db, { entryId: a.id, wallet: "0x000000000000000000000000000000000000beef", now })).rejects.toMatchObject({ code: "CONFLICT" });
 
-    // X login: verified identity, resumes the same entry from another device, wallets stay unique.
+    // The wallet is linked after filing, can be changed and unlinked, and stays unique.
+    await expect(setWaitlistWallet(h.db, { entryId: a.id, wallet: "0x123", now })).rejects.toMatchObject({ code: "INVALID_ADDRESS" });
+    const wallet = "0x000000000000000000000000000000000000DEAD";
+    expect((await setWaitlistWallet(h.db, { entryId: a.id, wallet, now })).wallet).toBe(wallet.toLowerCase());
+    expect((await setWaitlistWallet(h.db, { entryId: a.id, wallet: null, now })).wallet).toBeNull();
+    await setWaitlistWallet(h.db, { entryId: a.id, wallet, now });
+
+    // X login: verified identity, resumes the same entry from another device.
     const b = await connectX(h.db, { entryId: null, xId: "x-42", xUsername: "miner42", now });
     expect(b.xVerifiedAt).not.toBeNull();
     expect((await connectX(h.db, { entryId: null, xId: "x-42", xUsername: "miner42_renamed", now })).id).toBe(b.id);
     await expect(setWaitlistWallet(h.db, { entryId: b.id, wallet, now })).rejects.toMatchObject({ code: "ADDRESS_TAKEN" });
-    await expect(unlockWaitlistEntry(h.db, { entryId: b.id, requiredTasks: [], requireXVerified: true, now })).rejects.toMatchObject({
-      message: "Add your Robinhood Chain wallet first.",
-    });
-    await setWaitlistWallet(h.db, { entryId: b.id, wallet: "0x000000000000000000000000000000000000beef", now });
     await setWaitlistConsent(h.db, { entryId: b.id, agreed: true, now });
-    const second = await unlockWaitlistEntry(h.db, { entryId: b.id, requiredTasks: [], requireXVerified: true, now });
+
+    // Discord verified by OAuth: membership is required, and one Discord account stamps one permit.
+    const fileB = () => unlockWaitlistEntry(h.db, { entryId: b.id, requiredTasks: [], requireXVerified: true, requireDiscordMember: true, now });
+    const outside = await connectDiscord(h.db, { entryId: b.id, discordId: "d-7", discordUsername: "miner42", member: false, now });
+    expect(outside.discordVerifiedAt).not.toBeNull();
+    expect(outside.discordMemberAt).toBeNull();
+    await expect(fileB()).rejects.toMatchObject({ message: "Join the Discord and confirm it first." });
+    expect((await connectDiscord(h.db, { entryId: b.id, discordId: "d-7", discordUsername: "miner42", member: true, now })).discordMemberAt).not.toBeNull();
+    await expect(connectDiscord(h.db, { entryId: a.id, discordId: "d-7", discordUsername: "miner42", member: true, now })).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    const second = await fileB();
     expect(second.memberNo).toBe(first.memberNo! + 1);
-    expect(await waitlistStats(h.db)).toMatchObject({ entries: 2, xVerified: 1, withWallet: 2, unlocked: 2 });
+    expect(await waitlistStats(h.db)).toMatchObject({ entries: 2, xVerified: 1, discordMembers: 1, withWallet: 1, unlocked: 2 });
 
     // A handle-only entry can't pass a gate that requires X sign-in.
     const c = await startWithHandle(h.db, { entryId: null, handle: "no_x_yet", now });
-    await setWaitlistWallet(h.db, { entryId: c.id, wallet: "0x00000000000000000000000000000000000c0ffe", now });
     await setWaitlistConsent(h.db, { entryId: c.id, agreed: true, now });
     await expect(unlockWaitlistEntry(h.db, { entryId: c.id, requiredTasks: [], requireXVerified: true, now })).rejects.toMatchObject({
       message: "Connect your X account first.",

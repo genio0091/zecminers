@@ -1,6 +1,6 @@
-# Deployment: Vercel + Neon + Vercel Blob
+# Deployment: Vercel + Neon
 
-The web app and API run on Vercel. The ledger database is Neon Postgres, and the gameplay clips are served from Vercel Blob. The chain server (Zebra + Zord) and the payout signer are **not** on Vercel. They run on their own hosts (blueprint §11.2).
+The web app and API run on Vercel. The ledger database is Neon Postgres; the gameplay clips ship with the app. The chain server (Zebra + Zord) and the payout signer are **not** on Vercel. They run on their own hosts (blueprint §11.2).
 
 ## 1. Vercel project
 
@@ -25,20 +25,11 @@ The web app and API run on Vercel. The ledger database is Neon Postgres, and the
    `pnpm db:seed -- --dev` refuses to run against production.
 4. Turn on point-in-time restore (Neon keeps history per plan). Also schedule `infra/backup/backup.sh` for the encrypted daily dump the blueprint asks for (§11.4).
 
-Migrations are never run automatically on deploy. Run `pnpm db:migrate` whenever `packages/db/drizzle` changes. Generate new migrations with `pnpm db:generate`.
+Production builds (`VERCEL_ENV=production`) apply pending migrations before `next build` (`apps/web/scripts/migrate-on-deploy.mjs`, using `DATABASE_URL_UNPOOLED` when set); preview builds never touch the database. `/api/health` reports whether the schema is current. Generate new migrations with `pnpm db:generate`.
 
-## 3. Vercel Blob (media)
+## 3. Media
 
-1. Vercel → Storage → **Create → Blob** and connect it. This sets `BLOB_READ_WRITE_TOKEN`.
-2. Upload the seven clips:
-
-   ```bash
-   BLOB_READ_WRITE_TOKEN=… pnpm --filter @hoodvalley/web media:upload
-   ```
-
-3. Set the printed `NEXT_PUBLIC_MEDIA_BASE_URL=https://<store>.public.blob.vercel-storage.com/media` and redeploy. The CSP automatically allows that origin for `media-src`. Posters always ship with the app.
-
-Until you do this, the clips are served from `apps/web/public/media` (≈34 MB), which also works.
+The gameplay clips (≈2 MB) and their posters ship with the app in `apps/web/public/media` and deploy with every build — there is nothing to upload. If an older deployment still has `NEXT_PUBLIC_MEDIA_BASE_URL` / `BLOB_READ_WRITE_TOKEN` set, they are no longer read and can be removed.
 
 ## 4. Environment variables
 
@@ -67,7 +58,7 @@ Set these in Project → Settings → Environment Variables. See `.env.example` 
 
 **Upgrading a ZecMiners deployment to Hood Valley.** Run `pnpm db:migrate` (adds shift weights, gear-up and `shift_days`, and the new pool accounts) and then `pnpm db:seed`. The seed moves an already-posted 80/10/5/5 genesis into the 70/15/8/5/2 pools in one ledger transaction, carrying over whatever the old pools already paid out. Existing passes, claim codes and test logins keep working unchanged.
 
-**Waitlist gate.** `/` and `/litepaper` sit behind the waitlist until a visitor finishes it (Valley HQ players and the team skip it). For verified X sign-in, create an app at developer.x.com: OAuth 2.0, type "Web App", callback `https://<your-domain>/api/waitlist/x/callback` (and the `*.vercel.app` one if you use it), then set `AUTH_TWITTER_ID` and `AUTH_TWITTER_SECRET`. Without them step 1 asks for the X handle instead. The Follow / Repost / Discord tasks come from Admin → Waitlist gate (or `NEXT_PUBLIC_X_HANDLE`, `NEXT_PUBLIC_X_LAUNCH_TWEET`, `NEXT_PUBLIC_DISCORD_URL`), and the same panel exports the allowlist CSV.
+**The Claim Office.** `/` shows the Claim Office until a visitor files a claim (Valley HQ players and the team skip it); the litepaper is public. For verified X sign-in, create an app at developer.x.com: OAuth 2.0, type "Web App", callback `https://<your-domain>/api/waitlist/x/callback` (and the `*.vercel.app` one if you use it), then set `AUTH_TWITTER_ID` and `AUTH_TWITTER_SECRET`. Without them step 1 asks for the X handle instead. To verify Discord membership, add the redirect `https://<your-domain>/api/waitlist/discord/callback` to a Discord application (scopes `identify guilds`), and set `DISCORD_GUILD_ID` (Server Settings → Widget, or Developer Mode → Copy Server ID) with `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` — or reuse the Valley HQ login app's `AUTH_DISCORD_ID` / `AUTH_DISCORD_SECRET`. Without it the Discord stamp is a click-through. The Follow / Repost / Quote / Discord tasks come from Admin → Claim Office (or `NEXT_PUBLIC_X_HANDLE`, `NEXT_PUBLIC_X_LAUNCH_TWEET`, `NEXT_PUBLIC_DISCORD_URL`), and the same panel exports the allowlist CSV.
 
 **Season 1 clock.** The economy config sets the window (`shiftOpenHourUtc`, `shiftHours`), the daily pool (`dailyPool`, 38,888,889) and `seasonStart`. While `seasonStart` is null, Season 1 starts on the day the genesis ledger transaction is posted; deploying is refused until then with a clear message.
 

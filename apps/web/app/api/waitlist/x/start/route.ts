@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: NextRequest) {
   const origin = siteOrigin(req);
-  if (!xOAuthEnabled) return NextResponse.redirect(`${origin}/?x=unavailable`);
+  if (!xOAuthEnabled) return NextResponse.redirect(`${origin}/waitlist?x=unavailable`);
   const state = randomBytes(16).toString("base64url");
   const verifier = randomBytes(32).toString("base64url");
   const url = new URL("https://x.com/i/oauth2/authorize");

@@ -33,17 +33,3 @@ export function useClock(offsetMs = 0): number | null {
   );
   return now === null ? null : now + offsetMs;
 }
-
-function subscribeMotion(cb: () => void) {
-  const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-  mq.addEventListener("change", cb);
-  return () => mq.removeEventListener("change", cb);
-}
-
-export function usePrefersReducedMotion(): boolean {
-  return useSyncExternalStore(
-    subscribeMotion,
-    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    () => false,
-  );
-}

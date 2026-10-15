@@ -35,6 +35,20 @@
   --color-ink-link: #7a5200;
   --color-ink-blue: #1f6a88;
 
+  /* The Claim Office and the Field Journal (paper, stamps, permit). */
+  --color-office: #f6e7c1;
+  --color-permit: #fffbf0;
+  --color-rule: #c9ae72;
+  --color-ink-soft: #6b5536;
+  --color-ok: #2f6b33;
+  --color-ok-bg: #ddf0c8;
+  --color-mark-bg: #fbe6b0;
+  --color-seal: #a3341a;
+  --color-faded: #9a8460;
+  --color-off: #eadbb4;
+  --color-off-ink: #8c7651;
+  --color-moss-deep: #5e9a3a;
+
   /* Text and accents. */
   --color-cream: #fff4da;
   --color-sand: #e6d9b8;
@@ -100,6 +114,9 @@
   --animate-stamp: hv-stamp 0.7s ease both;
   --animate-float: hv-float 2s ease-in-out infinite;
   --animate-rise: hv-rise 0.5s ease both;
+  --animate-pop: hv-pop 0.35s ease-out both;
+  --animate-dots: hv-dots 1s infinite;
+  --animate-nudge: hv-nudge 1.6s ease-in-out infinite;
 
   @keyframes hv-marquee {
     from { transform: translateX(0); }
@@ -141,6 +158,20 @@
   @keyframes hv-rise {
     from { transform: translateY(14px); opacity: 0; }
     to { transform: none; opacity: 1; }
+  }
+  /* A rubber stamp landing at its own angle (--r). */
+  @keyframes hv-pop {
+    0% { transform: scale(1.8) rotate(var(--r, -6deg)); opacity: 0; }
+    100% { transform: scale(1) rotate(var(--r, -6deg)); opacity: 1; }
+  }
+  @keyframes hv-dots {
+    0% { opacity: 0.2; }
+    50% { opacity: 1; }
+    100% { opacity: 0.2; }
+  }
+  @keyframes hv-nudge {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 5px 0; }
   }
   @keyframes hv-glow {
     0%, 100% { opacity: 0.45; }

@@ -3,9 +3,9 @@ import { z } from "zod";
 import { route } from "@/lib/api";
 import { gateEntryId } from "@/lib/waitlist-route";
 
-const Body = z.object({ address: z.string().trim().max(64) });
+const Body = z.object({ address: z.string().trim().max(64).nullable() });
 
-/** The Robinhood Chain wallet the mint allowlist will check (0x + 40 hex, one entry per wallet). */
+/** Links, changes or (with `null`) unlinks the EVM wallet on the permit. One permit per wallet. */
 export const POST = route(
   { access: "public", mutation: true, allowDuringMaintenance: true, body: Body, rate: { name: "waitlist", limit: 20, windowSec: 600 } },
   async (ctx) => {

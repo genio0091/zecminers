@@ -1,9 +1,9 @@
 import { recentWaitlist, setGateConfig, waitlistStats } from "@hoodvalley/db";
 import { z } from "zod";
 import { requireUser, route } from "@/lib/api";
-import { defaultGateConfig, loadGateConfig, xOAuthEnabled } from "@/lib/waitlist";
+import { defaultGateConfig, discordOAuthEnabled, loadGateConfig, xOAuthEnabled } from "@/lib/waitlist";
 
-/** Waitlist gate: numbers, the live task config and the deploy defaults it falls back to. */
+/** The Claim Office: numbers, the live task config and the deploy defaults it falls back to. */
 export const GET = route({ access: "admin" }, async (ctx) => {
   const recent = await recentWaitlist(ctx.db, 12);
   return {
@@ -11,9 +11,12 @@ export const GET = route({ access: "admin" }, async (ctx) => {
     config: await loadGateConfig(ctx.db),
     defaults: defaultGateConfig(),
     xOAuth: xOAuthEnabled,
+    discordOAuth: discordOAuthEnabled,
     recent: recent.map((e) => ({
       handle: e.xUsername ?? e.handle,
       xVerified: !!e.xVerifiedAt,
+      discord: e.discordUsername,
+      discordMember: !!e.discordMemberAt,
       wallet: e.wallet,
       tasks: Object.keys(e.tasks).length,
       memberNo: e.memberNo,

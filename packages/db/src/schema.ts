@@ -413,7 +413,13 @@ export const waitlistEntries = pgTable(
     handle: text("handle"),
     /** Task key → ISO time it was marked (self-attested click-throughs). */
     tasks: jsonb("tasks").$type<Record<string, string>>().notNull().default({}),
-    /** Robinhood Chain wallet, lower-case. One entry per wallet. */
+    /** Set by Discord OAuth. One entry per Discord account. */
+    discordId: text("discord_id").unique(),
+    discordUsername: text("discord_username"),
+    discordVerifiedAt: ts("discord_verified_at"),
+    /** When Discord last confirmed the account is in the Hood Valley server. */
+    discordMemberAt: ts("discord_member_at"),
+    /** Robinhood Chain wallet, lower-case. One entry per wallet; linked after filing and changeable. */
     wallet: text("wallet").unique(),
     consentAt: ts("consent_at"),
     unlockedAt: ts("unlocked_at"),

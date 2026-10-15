@@ -33,7 +33,9 @@ Tokenomics (fixed 10,000,000,000 $VALLEY), funded once at genesis:
 | Presale LP Backing | 5% | 500,000,000 |
 | Core Team | 2% | 200,000,000 |
 
-**Waitlist gate.** New visitors don't see the site straight away. `/` first asks them to connect X (step 1), then `/waitlist` lists the tasks — follow the project on X, the X tasks set in the admin panel, join the Discord, add a Robinhood Chain wallet — and a consent box. "Enter the valley" re-checks everything on the server, gives them a place in line and opens the full site (landing page and litepaper). Signed-in Valley HQ players and the team skip the gate. Admin → Waitlist gate edits the tasks and exports the allowlist CSV.
+**The Claim Office (waitlist).** New visitors meet the Claim Office first: they connect X, then collect a stamp on their claim permit for each task — follow the project, the X tasks set in the admin panel (by default repost and quote the launch post) and the Discord — tick the consent box and **file the claim**. Filing re-checks everything on the server and gives them a prospector number; the permit then asks for the EVM wallet they will mint with (changeable later). Discord membership is verified through Discord sign-in when `DISCORD_GUILD_ID` is set, otherwise it is a click-through ("Marked"). Signed-in Valley HQ players and the team skip the office. Admin → Claim Office edits the tasks and exports the allowlist CSV.
+
+**The Field Journal.** Behind the Claim Office the website is a 16-page book (`components/site/book`): seven leaves turn in 3D (arrow keys, a sideways drag, page corners, chapter tabs, or `/#crew` … `/#join` links); below 860px it reads one page at a time. Every gameplay clip is a muted loop that plays while its page is open. The litepaper at `/litepaper` is open to everyone.
 
 Holder raffles give one free entry per active Valley Miner; draws are provably fair (seed commitment + future block hash, recomputable in the browser at `/raffles/[id]`).
 
@@ -53,7 +55,7 @@ infra/
   chain/          docker compose for Zebra + Zord, zebrad.toml
   signer/         Dockerfile for the signer
   backup/         encrypted pg_dump script
-docs/             architecture map, deployment (Vercel + Neon + Blob), genesis runbook, signer contract, API
+docs/             architecture map, deployment (Vercel + Neon), genesis runbook, signer contract, API
 ```
 
 ## Quick start (local)
@@ -91,17 +93,16 @@ pnpm dev:worker           # pg-boss worker against your local DB
 cd apps/signer && cargo test && SIGNER_DATABASE_URL=… cargo run   # signer dry-run
 ```
 
-## Deploying (Vercel + Neon + Blob)
+## Deploying (Vercel + Neon)
 
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). In short:
 
 1. Import the repo in Vercel and set **Root Directory = `apps/web`**.
 2. Add Neon from Vercel Storage. It sets `DATABASE_URL` and `DATABASE_URL_UNPOOLED`.
 3. Push all tables: `DATABASE_URL_UNPOOLED=… pnpm db:migrate && DATABASE_URL=… pnpm db:seed`. On an existing deployment this also moves an old 80/10/5/5 genesis into the 70/15/8/5/2 pools.
-4. Optionally upload the clips to a Blob store with `pnpm --filter @hoodvalley/web media:upload`, then set `NEXT_PUBLIC_MEDIA_BASE_URL`.
-5. For verified X sign-in on the waitlist, create an X app (OAuth 2.0, read-only) with the callback `https://<your-domain>/api/waitlist/x/callback` and set `AUTH_TWITTER_ID` / `AUTH_TWITTER_SECRET`. Set `NEXT_PUBLIC_X_HANDLE`, `NEXT_PUBLIC_DISCORD_URL` and optionally `NEXT_PUBLIC_X_LAUNCH_TWEET` (or set them later in Admin → Waitlist gate).
-6. Set `AUTH_SECRET`, `ADMIN_ACCESS_KEY`, `CLAIM_CODE_PEPPER` (never change it once passes exist), `CRON_SECRET` and the Turnstile keys. `NEXT_PUBLIC_X_URL` / `NEXT_PUBLIC_DISCORD_URL` fill the footer links. Discord login is optional.
-7. In GitHub → Actions secrets/variables, set `CRON_SECRET` and `SITE_URL` to turn on the scheduled jobs.
+4. For verified X sign-in in the Claim Office, create an X app (OAuth 2.0, read-only) with the callback `https://<your-domain>/api/waitlist/x/callback` and set `AUTH_TWITTER_ID` / `AUTH_TWITTER_SECRET`. To verify Discord membership, add the redirect `https://<your-domain>/api/waitlist/discord/callback` to a Discord app and set `DISCORD_GUILD_ID` (plus `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET`, or reuse `AUTH_DISCORD_ID` / `AUTH_DISCORD_SECRET`). Set `NEXT_PUBLIC_X_HANDLE`, `NEXT_PUBLIC_DISCORD_URL` and optionally `NEXT_PUBLIC_X_LAUNCH_TWEET` (or set them later in Admin → Claim Office).
+5. Set `AUTH_SECRET`, `ADMIN_ACCESS_KEY`, `CLAIM_CODE_PEPPER` (never change it once passes exist), `CRON_SECRET` and the Turnstile keys. `NEXT_PUBLIC_X_URL` / `NEXT_PUBLIC_DISCORD_URL` fill the footer links. Discord login is optional.
+6. In GitHub → Actions secrets/variables, set `CRON_SECRET` and `SITE_URL` to turn on the scheduled jobs.
 
 Season 1 opens on the day the genesis ledger transaction is posted (Admin → Genesis registry), or on `seasonStart` if the economy config sets one. Until then Valley HQ shows the Miners and explains why deploying is not open yet.
 
@@ -116,7 +117,8 @@ Repo ini adalah Hood Valley (sebelumnya ZecMiners): website, litepaper, Valley H
 - UI mengikuti file desain *Hood Valley Website Redesign*: Website, Valley HQ dApp, dan Litepaper.
 - Game: satu shift 12 jam per hari — **Deploy → Extract → Claim → Gear up**. Klaim = bagian dari pool harian (~38,888,889 $VALLEY) sesuai bobot (trait power × lama kerja).
 - Tokenomics: **70/15/8/5/2** dari 10B $VALLEY. Genesis lama 80/10/5/5 dipindahkan otomatis saat `pnpm db:seed`.
-- **Waitlist gate:** pengunjung baru harus connect X → follow → repost → join Discord → isi wallet 0x → setuju, lalu "Enter the valley" membuka landing page asli. Atur task di Admin → Waitlist gate.
+- **The Claim Office (waitlist):** pengunjung baru connect X → follow → repost → quote → join Discord → setuju → **FILE MY CLAIM** (dapat nomor prospector), lalu wallet EVM di-link setelahnya. Atur task di Admin → Claim Office.
+- **Field Journal:** landing page asli sekarang berupa buku 16 halaman (mode buku) yang bisa dibalik; semua video mp4 autoplay (muted, loop) dan selalu dari `/media` di app.
 - Login tetap **alamat pass + claim code** (sama seperti CSV team logins), jadi login tim yang sudah ada tetap jalan.
 
 ## Disclaimer
