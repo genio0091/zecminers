@@ -12,12 +12,14 @@ Mutations are POSTs. They are checked for **Origin**, return `MAINTENANCE` while
 | GET | `/api/public/por` | Latest proof-of-reserves snapshot, live treasury (cached 5 min), ledger pools |
 | GET | `/api/public/raffles` | Raffles (the seed is shown only after the draw) |
 | GET | `/api/public/raffles/:id/verify` | Seed, block hash, ticket ranges, winners, formula |
-| GET | `/api/waitlist/x/start` → `/api/waitlist/x/callback` | Waitlist step 1: X OAuth 2.0 (PKCE, read-only scopes); attaches the verified X account to the visitor's entry and sets the signed `hv_gate` cookie |
+| GET | `/api/waitlist/x/start` → `/api/waitlist/x/callback` | Claim Office step 1: X OAuth 2.0 (PKCE, read-only scopes); attaches the verified X account to the visitor's entry and sets the signed `hv_gate` cookie |
+| GET | `/api/waitlist/discord/start` → `/api/waitlist/discord/callback` | Discord stamp: OAuth (`identify guilds`, token revoked straight after) records the Discord account and whether it is in `DISCORD_GUILD_ID`; back to `/waitlist?discord=member\|missing\|taken\|…` |
 | POST | `/api/waitlist/start` | Step 1 while X OAuth is off: `{ handle }` |
-| POST | `/api/waitlist/task` | `{ key }`: mark a social task (`follow`, `tweet:<id>`, `discord`) — self-attested, shown as "Marked" |
-| POST | `/api/waitlist/wallet` | `{ address }`: Robinhood Chain wallet (`0x` + 40 hex, one entry per wallet) |
+| POST | `/api/waitlist/task` | `{ key }`: mark a social task (`follow`, `tweet:<id>`, and `discord` while the Discord check is off) — self-attested, shown as "Marked" |
+| POST | `/api/waitlist/wallet` | `{ address }`: link or change the EVM wallet (`0x` + 40 hex, one permit per wallet), before or after filing; `null` unlinks it |
 | POST | `/api/waitlist/consent` | `{ agreed }` |
-| POST | `/api/waitlist/enter` 🛡 | Unlock the full site: X, every task, wallet and consent are re-checked; returns the place in line |
+| POST | `/api/waitlist/enter` 🛡 | File the claim: X, every task, Discord membership (when verified) and consent are re-checked; returns the prospector number and opens the Field Journal |
+| POST | `/api/waitlist/signout` | Forget the permit on this browser (signing in with X again resumes it) |
 | GET | `/api/health` | DB ping + maintenance flag |
 
 ## Player (signed in: wallet + claim code, or Discord)
@@ -52,8 +54,8 @@ Mutations are POSTs. They are checked for **Origin**, return `MAINTENANCE` while
 | POST | `/api/admin/raffles` | Open a raffle (seed commitment + draw height H; ticket price 0 = holder raffle) |
 | POST | `/api/admin/raffles/:id/draw` | Draw after block H (block hash from Zebra) |
 | POST | `/api/admin/grants` 🔑 | Grant from the community pool (8%) |
-| GET · POST | `/api/admin/waitlist` | Waitlist gate numbers and task config (X handle, X tasks, Discord invite) |
-| GET | `/api/admin/waitlist/export` | CSV of everyone through the gate, in line order |
+| GET · POST | `/api/admin/waitlist` | Claim Office numbers, X / Discord check status and task config (X handle, X tasks, Discord invite) |
+| GET | `/api/admin/waitlist/export` | CSV of every filed claim, in line order (X, Discord, wallet, tasks) |
 | GET | `/api/admin/users?q=` · `/api/admin/users/:id` | Search users · user detail + ledger |
 | POST | `/api/admin/users/:id/freeze` | `{ frozen, reason }` |
 | POST | `/api/admin/maintenance` | `{ on, reason }` |

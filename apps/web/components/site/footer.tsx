@@ -8,7 +8,7 @@ const COLS: { title: string; links: { href: string; label: string }[] }[] = [
   {
     title: "GAME",
     links: [
-      { href: "/#lore", label: "The lore" },
+      { href: "/#crew", label: "The crew" },
       { href: "/#miners", label: "Valley Miners" },
       { href: "/#shift", label: "The daily shift" },
       { href: "/#season", label: "Season 1" },
@@ -17,10 +17,9 @@ const COLS: { title: string; links: { href: string; label: string }[] }[] = [
   {
     title: "TOKEN",
     links: [
-      { href: "/#token", label: "$VALLEY tokenomics" },
-      { href: "/#benefits", label: "Holder benefits" },
-      { href: "/#season2", label: "Season 2" },
-      { href: "/#roadmap", label: "Launch status" },
+      { href: "/#valley", label: "$VALLEY tokenomics" },
+      { href: "/litepaper#benefits", label: "Holder benefits" },
+      { href: "/#ahead", label: "Season 2 & roadmap" },
     ],
   },
   {
@@ -28,7 +27,7 @@ const COLS: { title: string; links: { href: string; label: string }[] }[] = [
     links: [
       { href: "/litepaper", label: "Litepaper" },
       { href: "/play", label: "Valley HQ" },
-      { href: "/#allowlist", label: "Allowlist" },
+      { href: "/waitlist", label: "The Claim Office" },
       { href: "/raffles", label: "Raffle draws" },
       { href: "/proof-of-reserves", label: "Proof of reserves" },
     ],

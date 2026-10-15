@@ -16,11 +16,11 @@ export async function GET(req: NextRequest) {
     return res;
   };
   const q = req.nextUrl.searchParams;
-  if (q.get("error")) return back("/?x=cancelled");
+  if (q.get("error")) return back("/waitlist?x=cancelled");
   const stored = verifyGateValue(req.cookies.get("hv_x_oauth")?.value);
   const [state, verifier] = stored?.split(":") ?? [];
   const code = q.get("code");
-  if (!state || !verifier || !code || q.get("state") !== state) return back("/?x=expired");
+  if (!state || !verifier || !code || q.get("state") !== state) return back("/waitlist?x=expired");
 
   try {
     const token = await fetch("https://api.x.com/2/oauth2/token", {
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     });
     if (!token.ok) {
       console.error("[waitlist/x] token exchange failed", token.status, await token.text().catch(() => ""));
-      return back("/?x=error");
+      return back("/waitlist?x=error");
     }
     const { access_token: accessToken } = (await token.json()) as { access_token: string };
     const meRes = await fetch("https://api.x.com/2/users/me", { headers: { authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(10_000) });
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
       headers: { authorization: `Basic ${basic()}`, "content-type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ token: accessToken, token_type_hint: "access_token" }),
     }).catch(() => {});
-    if (!meRes.ok || !me?.data?.id || !me.data.username) return back("/?x=error");
+    if (!meRes.ok || !me?.data?.id || !me.data.username) return back("/waitlist?x=error");
 
     const entry = await connectX(getDb(), {
       entryId: verifyGateValue(req.cookies.get(GATE_COOKIE)?.value),
@@ -55,6 +55,6 @@ export async function GET(req: NextRequest) {
     return res;
   } catch (err) {
     console.error("[waitlist/x]", err);
-    return back("/?x=error");
+    return back("/waitlist?x=error");
   }
 }

@@ -1,9 +1,7 @@
 /**
- * Gameplay clips live in /public/media by default. After `pnpm media:upload` they can be served
- * from a Vercel Blob store instead: set NEXT_PUBLIC_MEDIA_BASE_URL to the printed base URL.
+ * Gameplay clips ship with the app in /public/media (≈2 MB in total), so they always deploy
+ * together with the code that names them.
  */
-const BASE = (process.env.NEXT_PUBLIC_MEDIA_BASE_URL ?? "/media").replace(/\/$/, "");
-
 export const CLIPS = {
   valleyMap: "valley-map",
   minerCave: "miner-cave",
@@ -15,10 +13,18 @@ export const CLIPS = {
 export type Clip = (typeof CLIPS)[keyof typeof CLIPS];
 
 export function clipSrc(clip: Clip): string {
-  return `${BASE}/${clip}.mp4`;
+  return `/media/${clip}.mp4`;
 }
 
-/** Posters always ship with the app so first paint never waits on the video host. */
 export function posterSrc(clip: Clip): string {
   return `/media/posters/${clip}.webp`;
+}
+
+/** Muted loops may autoplay everywhere; set the property before asking, and retry once data arrives. */
+export function playMuted(v: HTMLVideoElement) {
+  v.muted = true;
+  v.defaultMuted = true;
+  v.playsInline = true;
+  const p = v.play();
+  if (p && typeof p.catch === "function") p.catch(() => {});
 }

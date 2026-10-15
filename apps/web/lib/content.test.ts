@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { POOL_ALLOCATION, SEASON_1_DAILY_POOL, TOTAL_SUPPLY } from "@hoodvalley/economy";
 import { describe, expect, it } from "vitest";
-import { ALLOCATION, FAQ } from "./content";
+import { ALLOCATION, DAILY_POOL_TEXT } from "./content";
 
 /**
  * The public site must match the litepaper: a fixed 10B supply split 70/15/8/5/2, and no
@@ -27,8 +27,7 @@ describe("public wording", () => {
   });
 
   it("quotes the same daily pool as the economy", () => {
-    const daily = SEASON_1_DAILY_POOL.toLocaleString("en-US");
-    expect(FAQ.find((f) => f.q === "How much $VALLEY is mined each day?")?.a).toContain(daily);
+    expect(DAILY_POOL_TEXT).toBe(SEASON_1_DAILY_POOL.toLocaleString("en-US"));
   });
 
   it("never claims the token can't be traded or promises returns", () => {

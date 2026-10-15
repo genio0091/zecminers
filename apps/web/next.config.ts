@@ -2,27 +2,14 @@ import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
 
-/** Where the gameplay clips are served from: /media locally, or a Vercel Blob store. */
-function mediaOrigin(): string {
-  const base = process.env.NEXT_PUBLIC_MEDIA_BASE_URL;
-  if (!base) return "";
-  try {
-    return new URL(base).origin;
-  } catch {
-    return "";
-  }
-}
-
-const media = mediaOrigin();
-
 // Blueprint §11.5: CSP + HSTS. Next.js inlines small bootstrap scripts, so 'unsafe-inline'
 // stays for scripts until nonce-based CSP is wired in; nothing else is allowed off-site.
 const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://challenges.cloudflare.com`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: https://cdn.discordapp.com ${media}`.trim(),
-  `media-src 'self' blob: ${media}`.trim(),
+  "img-src 'self' data: blob: https://cdn.discordapp.com",
+  "media-src 'self' blob:",
   "font-src 'self' data:",
   `connect-src 'self'${isDev ? " ws:" : ""}`,
   "frame-src https://challenges.cloudflare.com",

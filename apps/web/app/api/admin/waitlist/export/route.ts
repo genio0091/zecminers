@@ -6,13 +6,24 @@ const cell = (v: unknown) => {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 
-/** CSV of everyone through the gate, in line order — the mint allowlist. */
+/** CSV of every filed claim, in line order — the mint allowlist. */
 export const GET = route({ access: "admin" }, async (ctx) => {
   const rows = await listUnlockedWaitlist(ctx.db);
   const csv = [
-    "member_no,x_handle,x_verified,wallet,tasks,unlocked_at",
+    "member_no,x_handle,x_verified,discord,discord_member,wallet,tasks,filed_at",
     ...rows.map((r) =>
-      [r.memberNo, r.xUsername ?? r.handle, r.xVerified ? "yes" : "no", r.wallet, Object.keys(r.tasks).join(" "), r.unlockedAt?.toISOString()].map(cell).join(","),
+      [
+        r.memberNo,
+        r.xUsername ?? r.handle,
+        r.xVerified ? "yes" : "no",
+        r.discordUsername,
+        r.discordMember ? "yes" : "no",
+        r.wallet,
+        Object.keys(r.tasks).join(" "),
+        r.unlockedAt?.toISOString(),
+      ]
+        .map(cell)
+        .join(","),
     ),
   ].join("\n");
   return new Response(`${csv}\n`, {

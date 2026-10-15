@@ -477,14 +477,24 @@ function TestLogins({ busy, run, quick }: { busy: boolean; run: Run; quick: Quic
 type GateTweet = { id: string; kind: "retweet" | "like" | "quote" | "reply" | "post"; label: string; url: string; text?: string };
 type GateConfig = { xHandle: string; discordInvite: string; tweets: GateTweet[] };
 type WaitlistOverview = {
-  stats: { entries: number; xVerified: number; withWallet: number; unlocked: number };
+  stats: { entries: number; xVerified: number; discordMembers: number; withWallet: number; unlocked: number };
   config: GateConfig;
   defaults: GateConfig;
   xOAuth: boolean;
-  recent: { handle: string | null; xVerified: boolean; wallet: string | null; tasks: number; memberNo: number | null; updatedAt: string }[];
+  discordOAuth: boolean;
+  recent: {
+    handle: string | null;
+    xVerified: boolean;
+    discord: string | null;
+    discordMember: boolean;
+    wallet: string | null;
+    tasks: number;
+    memberNo: number | null;
+    updatedAt: string;
+  }[];
 };
 
-/** The waitlist gate in front of the public site: numbers, the X tasks, the Discord invite, CSV export. */
+/** The Claim Office in front of the public site: numbers, the X tasks, the Discord invite, CSV export. */
 function WaitlistAdmin({ busy, run }: { busy: boolean; run: Run }) {
   const [data, setData] = useState<WaitlistOverview | null>(null);
   const [cfg, setCfg] = useState<GateConfig | null>(null);
@@ -501,11 +511,11 @@ function WaitlistAdmin({ busy, run }: { busy: boolean; run: Run }) {
   useEffect(() => {
     load();
   }, [load, busy]);
-  if (!data || !cfg) return <Section title="Waitlist gate">Loading…</Section>;
+  if (!data || !cfg) return <Section title="Claim Office (waitlist)">Loading…</Section>;
   const setTweet = (i: number, patch: Partial<GateTweet>) => setCfg({ ...cfg, tweets: cfg.tweets.map((t, n) => (n === i ? { ...t, ...patch } : t)) });
   return (
     <Section
-      title="Waitlist gate"
+      title="Claim Office (waitlist)"
       right={
         <a href="/api/admin/waitlist/export" className="text-[13px]">
           Export allowlist CSV ▸
@@ -515,13 +525,19 @@ function WaitlistAdmin({ busy, run }: { busy: boolean; run: Run }) {
       <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3">
         <Stat label="Started" value={fmt(data.stats.entries)} />
         <Stat label="X verified" value={fmt(data.stats.xVerified)} valueClass="text-cream" />
+        <Stat label="In the Discord" value={fmt(data.stats.discordMembers)} valueClass="text-cream" />
         <Stat label="Wallets" value={fmt(data.stats.withWallet)} valueClass="text-cream" />
-        <Stat label="Through the gate" value={fmt(data.stats.unlocked)} valueClass="text-moss" />
+        <Stat label="Claims filed" value={fmt(data.stats.unlocked)} valueClass="text-moss" />
       </div>
       <p className={cx("mb-0 mt-3 text-[13px]", data.xOAuth ? "text-moss" : "text-ember")}>
         {data.xOAuth
           ? "X sign-in is on: step 1 is verified by X."
           : "X sign-in is off: visitors type their handle (marked, not verified). Set AUTH_TWITTER_ID and AUTH_TWITTER_SECRET to turn it on."}
+      </p>
+      <p className={cx("mb-0 mt-1 text-[13px]", data.discordOAuth ? "text-moss" : "text-ember")}>
+        {data.discordOAuth
+          ? "Discord check is on: membership of the server is verified through Discord sign-in."
+          : "Discord check is off: “I've joined” is a click (marked). Set DISCORD_GUILD_ID and a Discord app (DISCORD_CLIENT_ID/SECRET or AUTH_DISCORD_ID/SECRET) to verify it."}
       </p>
       <div className="mt-4 grid gap-2 md:grid-cols-2">
         <label className="grid gap-1 text-[10px] uppercase tracking-[1.5px] text-khaki">
@@ -582,9 +598,10 @@ function WaitlistAdmin({ busy, run }: { busy: boolean; run: Run }) {
             <div key={i} className="flex flex-wrap justify-between gap-3 border-b-3 border-ink py-1">
               <span>
                 {r.handle ? `@${r.handle}` : "—"} {r.xVerified ? <span className="text-moss">✓</span> : null}
+                {r.discord ? <span className={r.discordMember ? "text-moss" : "text-stone"}> · {r.discord}</span> : null}
               </span>
               <span className="text-stone">
-                {r.tasks} tasks · {r.wallet ? short(r.wallet, 6, 4) : "no wallet"} · {r.memberNo ? `#${r.memberNo}` : "in progress"}
+                {r.tasks} tasks · {r.wallet ? short(r.wallet, 6, 4) : "no wallet"} · {r.memberNo ? `filed #${r.memberNo}` : "in progress"}
               </span>
             </div>
           ))}

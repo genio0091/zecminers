@@ -1,0 +1,332 @@
+/*
+ * The Field Journal: the site as a 16-page book. The spread is drawn at 1106 × 700 and scaled to
+ * fit between the header and the page controls; seven leaves turn in 3D around the spine. Below
+ * 860px it becomes a single page that slides in. Structural rules live here (not in utilities)
+ * because the narrow layout overrides them, and the leaves' inline transforms, with !important.
+ */
+
+.hv-root {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #f2b949;
+  color: #1a1208;
+  color-scheme: light;
+  line-height: 1.55;
+}
+.hv-root :focus-visible {
+  outline-color: #1f6a88;
+}
+
+.hv-header {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 24px;
+  flex-wrap: wrap;
+}
+.hv-main {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px 44px 12px;
+}
+.hv-bottom {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 16px 16px;
+}
+
+.hv-wrap {
+  position: relative;
+  flex: none;
+  width: 1106px;
+  height: 700px;
+  transform-origin: center center;
+}
+.hv-cover {
+  position: absolute;
+  inset: -16px -18px;
+  background: #3a2614;
+  border: 4px solid #1a1208;
+  box-shadow: 14px 14px 0 #1a1208;
+}
+.hv-edge {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+}
+.hv-edge-l {
+  background: repeating-linear-gradient(90deg, #c9ae72 0 1px, #fff4da 1px 3px);
+}
+.hv-edge-r {
+  background: repeating-linear-gradient(90deg, #fff4da 0 2px, #c9ae72 2px 3px);
+}
+
+.hv-book {
+  position: absolute;
+  inset: 0;
+  perspective: 3400px;
+  touch-action: pan-y;
+}
+.hv-book:focus-visible {
+  outline: 3px dashed #1a1208;
+  outline-offset: 26px;
+}
+.hv-leaf {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+}
+.hv-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  scrollbar-width: thin;
+}
+.hv-face-back {
+  transform: rotateY(180deg);
+}
+/* Page 1 and page 16 are glued to the boards. */
+.hv-face-fixed {
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  z-index: 0;
+}
+.hv-face-fixed.hv-face-right {
+  left: 50%;
+}
+
+.hv-page {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 30px 38px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: #fff4da;
+}
+.hv-page-l {
+  background-image: linear-gradient(to left, rgba(26, 18, 8, 0.18), rgba(26, 18, 8, 0) 9%);
+}
+.hv-page-r {
+  background-image: linear-gradient(to right, rgba(26, 18, 8, 0.18), rgba(26, 18, 8, 0) 9%);
+}
+.hv-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 2px;
+  color: #7a5200;
+}
+.hv-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  overflow-y: auto;
+}
+.hv-no {
+  text-align: center;
+  font-family: var(--font-pixel);
+  font-size: 22px;
+  color: #7a5200;
+}
+.hv-h {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-weight: 400;
+  font-size: 60px;
+  line-height: 0.88;
+}
+.hv-title {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-weight: 400;
+  font-size: 96px;
+  line-height: 0.84;
+  letter-spacing: 1px;
+  text-shadow: 0 6px 0 rgba(242, 185, 73, 0.6);
+}
+
+.hv-corner {
+  position: absolute;
+  bottom: 0;
+  width: 58px;
+  height: 58px;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  z-index: 60;
+  transition:
+    width 0.15s,
+    height 0.15s;
+}
+.hv-corner:hover {
+  width: 76px;
+  height: 76px;
+}
+.hv-corner-prev {
+  left: 0;
+  background: linear-gradient(225deg, rgba(0, 0, 0, 0) 50%, #e8d3a4 50%, #c9ae72 100%);
+}
+.hv-corner-next {
+  right: 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0) 50%, #e8d3a4 50%, #c9ae72 100%);
+}
+.hv-pageno {
+  display: none;
+}
+
+@keyframes hv-in-next {
+  from {
+    translate: 56px 0;
+    opacity: 0;
+  }
+  to {
+    translate: 0 0;
+    opacity: 1;
+  }
+}
+@keyframes hv-in-prev {
+  from {
+    translate: -56px 0;
+    opacity: 0;
+  }
+  to {
+    translate: 0 0;
+    opacity: 1;
+  }
+}
+
+@media (max-height: 700px) and (min-width: 861px) {
+  .hv-header {
+    padding: 6px 24px;
+  }
+  .hv-main {
+    padding: 14px 44px 6px;
+  }
+  .hv-bottom {
+    padding: 4px 16px 8px;
+  }
+}
+
+@media (max-width: 860px) {
+  .hv-nav-secondary,
+  .hv-sun,
+  .hv-edge,
+  .hv-corner,
+  .hv-chapters {
+    display: none !important;
+  }
+  .hv-header {
+    padding: 10px 16px;
+    flex-wrap: nowrap;
+  }
+  .hv-logo-text {
+    font-size: 24px !important;
+  }
+  .hv-join {
+    font-size: 20px !important;
+    padding: 8px 12px !important;
+  }
+  .hv-main {
+    padding: 14px 18px 6px;
+  }
+  .hv-wrap {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 560px;
+    transform: none !important;
+    flex: 1 1 auto;
+  }
+  .hv-cover {
+    inset: -8px;
+    box-shadow: 8px 8px 0 #1a1208;
+  }
+  .hv-book {
+    perspective: none;
+  }
+  .hv-leaf {
+    position: static !important;
+    transform: none !important;
+    transform-style: flat !important;
+    transition: none !important;
+  }
+  .hv-book .hv-face {
+    display: none;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: none;
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
+    overflow-y: auto;
+  }
+  .hv-book .hv-face[data-on="true"] {
+    display: block;
+    animation: hv-in-next 0.36s ease-out;
+  }
+  .hv-book[data-dir="prev"] .hv-face[data-on="true"] {
+    animation-name: hv-in-prev;
+  }
+  .hv-page {
+    height: auto;
+    min-height: 100%;
+    padding: 20px 20px 14px;
+    background-image: none;
+  }
+  .hv-pageno {
+    display: inline-block;
+  }
+  .hv-h {
+    font-size: 46px !important;
+  }
+  .hv-title {
+    font-size: 76px !important;
+  }
+}
+
+@media (max-width: 860px) and (max-height: 700px) {
+  .hv-title {
+    font-size: 58px !important;
+  }
+  .hv-h {
+    font-size: 40px !important;
+  }
+  .hv-page {
+    padding: 14px 16px 10px;
+    gap: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hv-leaf {
+    transition: none !important;
+  }
+}

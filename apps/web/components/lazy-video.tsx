@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { clipSrc, posterSrc, type Clip } from "@/lib/media";
-import { usePrefersReducedMotion } from "@/lib/use-clock";
+import { clipSrc, playMuted, posterSrc, type Clip } from "@/lib/media";
 import { cx } from "./ui";
 
 /**
- * Below-the-fold clips load only when they get near the viewport, and never autoplay for
- * people who asked for reduced motion (they get the poster frame).
+ * A muted, looping gameplay clip. Below-the-fold clips start loading when they get near the
+ * viewport; `eager` ones load straight away. Every clip plays on its own — the poster frame is
+ * only what shows while the first frames arrive.
  */
 export function LazyVideo({
   clip,
@@ -24,13 +24,12 @@ export function LazyVideo({
   style?: React.CSSProperties;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
-  const [near, setNear] = useState(false);
-  const reduce = usePrefersReducedMotion();
-  const src = !reduce && (eager || near) ? clipSrc(clip) : undefined;
+  const [near, setNear] = useState(eager);
+  const src = near ? clipSrc(clip) : undefined;
 
   useEffect(() => {
     const v = ref.current;
-    if (!v || eager) return;
+    if (!v || near) return;
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
@@ -42,11 +41,11 @@ export function LazyVideo({
     );
     io.observe(v);
     return () => io.disconnect();
-  }, [eager]);
+  }, [near]);
 
   useEffect(() => {
     const v = ref.current;
-    if (v && src) v.play().catch(() => {});
+    if (v && src) playMuted(v);
   }, [src]);
 
   return (
@@ -57,8 +56,11 @@ export function LazyVideo({
       muted
       loop
       playsInline
-      autoPlay={!!src}
-      preload={eager ? "auto" : "none"}
+      autoPlay
+      preload={eager ? "auto" : "metadata"}
+      onCanPlay={(e) => {
+        if (e.currentTarget.paused) playMuted(e.currentTarget);
+      }}
       aria-label={label || undefined}
       aria-hidden={label ? undefined : true}
       className={cx("block w-full object-cover pixelated", className)}

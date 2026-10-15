@@ -5,7 +5,8 @@ import { waitlistEntries } from "../schema";
 import { audit, getFlag, setFlag } from "../system";
 
 /**
- * The waitlist gate in front of the public site (connect X → social tasks → wallet → consent).
+ * The Claim Office in front of the public site: connect X → social tasks → Discord → consent →
+ * file the claim (a place in line). The wallet is linked after filing and can be changed.
  * Entries are anonymous until X is connected; the browser holds a signed cookie with the id.
  */
 
@@ -132,23 +133,48 @@ export async function markWaitlistTask(db: DbOrTx, p: { entryId: string; key: st
   return row;
 }
 
-export async function setWaitlistWallet(db: DbOrTx, p: { entryId: string; wallet: string; now: Date }) {
-  const wallet = p.wallet.trim();
-  if (!WALLET_RE.test(wallet)) {
-    throw new GameError("INVALID_ADDRESS", "That doesn't look like a wallet address. It should start with 0x followed by 40 characters.");
+/** Links (or changes) the Robinhood Chain wallet, before or after filing. `null` unlinks it. */
+export async function setWaitlistWallet(db: DbOrTx, p: { entryId: string; wallet: string | null; now: Date }) {
+  const wallet = p.wallet?.trim() ?? null;
+  if (wallet !== null && !WALLET_RE.test(wallet)) {
+    throw new GameError("INVALID_ADDRESS", "That doesn't look like a valid EVM address: 0x followed by 40 hex characters.");
   }
   try {
     const [row] = await db
       .update(waitlistEntries)
-      .set({ wallet: wallet.toLowerCase(), updatedAt: p.now })
-      .where(sql`${waitlistEntries.id} = ${p.entryId} and ${waitlistEntries.unlockedAt} is null`)
+      .set({ wallet: wallet?.toLowerCase() ?? null, updatedAt: p.now })
+      .where(eq(waitlistEntries.id, p.entryId))
       .returning();
-    if (!row) throw new GameError("CONFLICT", "This entry is already on the list.");
+    if (!row) throw new GameError("NOT_FOUND", "Start the waitlist again.");
     return row;
   } catch (err) {
-    if (isUniqueViolation(err)) throw new GameError("ADDRESS_TAKEN", "That wallet is already on the waitlist.");
+    if (isUniqueViolation(err)) throw new GameError("ADDRESS_TAKEN", "That wallet is already on another permit.");
     throw err;
   }
+}
+
+/**
+ * Discord OAuth result: the account is attached to the entry, with whether Discord listed the
+ * Hood Valley server among its guilds. A Discord account can stamp only one permit.
+ */
+export async function connectDiscord(db: Database, p: { entryId: string; discordId: string; discordUsername: string; member: boolean; now: Date }) {
+  return db.transaction(async (tx) => {
+    const [owner] = await tx.select({ id: waitlistEntries.id }).from(waitlistEntries).where(eq(waitlistEntries.discordId, p.discordId)).limit(1);
+    if (owner && owner.id !== p.entryId) throw new GameError("CONFLICT", "That Discord account is already on another permit.");
+    const [row] = await tx
+      .update(waitlistEntries)
+      .set({
+        discordId: p.discordId,
+        discordUsername: p.discordUsername,
+        discordVerifiedAt: p.now,
+        discordMemberAt: p.member ? sql`coalesce(${waitlistEntries.discordMemberAt}, ${p.now.toISOString()}::timestamptz)` : null,
+        updatedAt: p.now,
+      })
+      .where(eq(waitlistEntries.id, p.entryId))
+      .returning();
+    if (!row) throw new GameError("NOT_FOUND", "Start the waitlist again.");
+    return row;
+  });
 }
 
 export async function setWaitlistConsent(db: DbOrTx, p: { entryId: string; agreed: boolean; now: Date }) {
@@ -162,12 +188,13 @@ export async function setWaitlistConsent(db: DbOrTx, p: { entryId: string; agree
 }
 
 /**
- * The gate check, done again on the server whatever the button said: identity, every required
- * task, a wallet and consent. Member numbers are dense: unlocks are serialised by a lock.
+ * Filing the claim, checked again on the server whatever the button said: identity, every
+ * required task, Discord membership when it is verified by OAuth, and consent. Member numbers
+ * are dense: filings are serialised by a lock.
  */
 export async function unlockWaitlistEntry(
   db: Database,
-  p: { entryId: string; requiredTasks: string[]; requireXVerified: boolean; now: Date },
+  p: { entryId: string; requiredTasks: string[]; requireXVerified: boolean; requireDiscordMember?: boolean; now: Date },
 ) {
   return db.transaction(async (tx) => {
     const [e] = await tx.select().from(waitlistEntries).where(eq(waitlistEntries.id, p.entryId)).limit(1).for("update");
@@ -176,7 +203,7 @@ export async function unlockWaitlistEntry(
     if (p.requireXVerified ? !e.xVerifiedAt : !(e.xVerifiedAt || e.handle)) throw new GameError("VALIDATION", "Connect your X account first.");
     const missing = p.requiredTasks.filter((k) => !e.tasks[k]);
     if (missing.length) throw new GameError("VALIDATION", "Finish every task first.", { missing });
-    if (!e.wallet) throw new GameError("VALIDATION", "Add your Robinhood Chain wallet first.");
+    if (p.requireDiscordMember && !e.discordMemberAt) throw new GameError("VALIDATION", "Join the Discord and confirm it first.");
     if (!e.consentAt) throw new GameError("VALIDATION", "Tick the consent box to continue.");
     await tx.execute(sql`select pg_advisory_xact_lock(333300)`);
     const [{ max } = { max: 0 }] = await tx.select({ max: sql<number>`coalesce(max(${waitlistEntries.memberNo}), 0)::int` }).from(waitlistEntries);
@@ -194,11 +221,18 @@ export async function waitlistStats(db: DbOrTx) {
     .select({
       entries: sql<number>`count(*)::int`,
       xVerified: sql<number>`count(${waitlistEntries.xVerifiedAt})::int`,
+      discordMembers: sql<number>`count(${waitlistEntries.discordMemberAt})::int`,
       withWallet: sql<number>`count(${waitlistEntries.wallet})::int`,
       unlocked: sql<number>`count(${waitlistEntries.unlockedAt})::int`,
     })
     .from(waitlistEntries);
-  return { entries: Number(row?.entries ?? 0), xVerified: Number(row?.xVerified ?? 0), withWallet: Number(row?.withWallet ?? 0), unlocked: Number(row?.unlocked ?? 0) };
+  return {
+    entries: Number(row?.entries ?? 0),
+    xVerified: Number(row?.xVerified ?? 0),
+    discordMembers: Number(row?.discordMembers ?? 0),
+    withWallet: Number(row?.withWallet ?? 0),
+    unlocked: Number(row?.unlocked ?? 0),
+  };
 }
 
 /** Everyone who made it through the gate, in line order. */
@@ -209,6 +243,8 @@ export async function listUnlockedWaitlist(db: DbOrTx) {
       xUsername: waitlistEntries.xUsername,
       handle: waitlistEntries.handle,
       xVerified: isNotNull(waitlistEntries.xVerifiedAt),
+      discordUsername: waitlistEntries.discordUsername,
+      discordMember: isNotNull(waitlistEntries.discordMemberAt),
       wallet: waitlistEntries.wallet,
       tasks: waitlistEntries.tasks,
       unlockedAt: waitlistEntries.unlockedAt,
