@@ -22,7 +22,7 @@
     "@hoodvalley/zcash": "workspace:*",
     "@hoodvalley/zord-client": "workspace:*",
     "drizzle-orm": "^0.45.3",
-    "pg": "^8.23.0"
+    "pg": "^8.23.1"
   },
   "devDependencies": {
     "@types/node": "^22.20.4",
